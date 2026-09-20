@@ -1,0 +1,4 @@
+.DS_Store
+.vercel/
+node_modules/
+reddit-post.md

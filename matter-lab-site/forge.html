@@ -1,0 +1,1510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Orbital Forge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --void:#070A12;
+  --chamber:#0E1320;
+  --panel:#141A2B;
+  --panel-2:#1A2238;
+  --rim:#232C46;
+  --rim-hi:#3A4870;
+  --steel:#8794B5;
+  --steel-dim:#5D6A87;
+  --chalk:#E9EDF9;
+  --balmer:#7C9BFF;
+  --sodium:#FFB03B;
+  --copper:#49D6C0;
+  --strontium:#FF5C7A;
+  --potassium:#B98CFF;
+  --ff-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --ff-body:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+  --ff-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--void);color:var(--chalk);
+  font-family:var(--ff-body);font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+}
+#app{
+  height:100%;display:flex;flex-direction:column;
+  background:
+    radial-gradient(1200px 700px at 78% -10%, rgba(124,155,255,.10), transparent 60%),
+    radial-gradient(900px 600px at 8% 110%, rgba(73,214,192,.07), transparent 60%),
+    var(--void);
+}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+:focus-visible{outline:2px solid var(--balmer);outline-offset:2px;border-radius:4px}
+
+/* ---------- rig header ---------- */
+.rig{
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:10px clamp(12px,2vw,20px);
+  border-bottom:1px solid var(--rim);
+  background:linear-gradient(180deg,rgba(26,34,56,.9),rgba(14,19,32,.75));
+  backdrop-filter:blur(8px);
+  flex:0 0 auto;
+}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.mark{
+  width:30px;height:30px;flex:0 0 auto;border-radius:50%;
+  border:1px solid var(--rim-hi);position:relative;
+  background:radial-gradient(circle at 50% 50%, var(--sodium) 0 2.5px, transparent 3px);
+  box-shadow:0 0 14px rgba(255,176,59,.35), inset 0 0 10px rgba(124,155,255,.18);
+}
+.mark::before,.mark::after{
+  content:"";position:absolute;inset:3px;border-radius:50%;
+  border:1px solid rgba(124,155,255,.5);border-right-color:transparent;border-left-color:transparent;
+  animation:spin 6s linear infinite;
+}
+.mark::after{inset:8px;border-color:rgba(73,214,192,.6);border-top-color:transparent;border-bottom-color:transparent;animation-duration:3.4s;animation-direction:reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.brand h1{
+  font-family:var(--ff-display);font-weight:800;font-size:19px;margin:0;
+  letter-spacing:-.015em;white-space:nowrap;
+}
+.brand .sub{
+  font-family:var(--ff-mono);font-size:10px;color:var(--steel);
+  letter-spacing:.14em;text-transform:uppercase;margin-top:-2px;white-space:nowrap;
+}
+.modes{display:flex;gap:2px;padding:3px;border:1px solid var(--rim);border-radius:9px;background:rgba(7,10,18,.6)}
+.modes button{
+  padding:6px 14px;border-radius:6px;font-size:12.5px;font-weight:500;color:var(--steel);
+  display:flex;align-items:center;gap:7px;transition:background .16s,color .16s;
+}
+.modes button .k{font-family:var(--ff-mono);font-size:9.5px;opacity:.55;border:1px solid currentColor;border-radius:3px;padding:0 3px;line-height:1.4}
+.modes button:hover{color:var(--chalk);background:rgba(124,155,255,.08)}
+.modes button[aria-selected="true"]{background:var(--balmer);color:#0A0E1A;font-weight:600}
+.modes button[aria-selected="true"] .k{opacity:.6}
+.rig .spacer{flex:1}
+.readout-chip{
+  font-family:var(--ff-mono);font-size:11px;color:var(--steel);
+  border:1px solid var(--rim);border-radius:7px;padding:5px 10px;background:rgba(7,10,18,.5);
+  white-space:nowrap;
+}
+.readout-chip b{color:var(--copper);font-weight:500}
+
+/* ---------- layout ---------- */
+main{flex:1 1 auto;min-height:0;position:relative}
+.view{position:absolute;inset:0;display:flex;min-height:0}
+.view[hidden]{display:none!important}
+.rail{
+  width:314px;flex:0 0 314px;border-right:1px solid var(--rim);
+  background:linear-gradient(180deg,var(--chamber),#0B0F1B);
+  overflow-y:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;
+}
+.rail.right{border-right:0;border-left:1px solid var(--rim)}
+.stage{flex:1 1 auto;min-width:0;position:relative;display:flex;flex-direction:column}
+
+.sec{padding:14px 16px;border-bottom:1px solid var(--rim)}
+.sec:last-child{border-bottom:0}
+.eyebrow{
+  font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--steel);margin:0 0 10px;display:flex;align-items:center;gap:8px;
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--rim),transparent)}
+
+/* ---------- periodic table ---------- */
+.tablewrap{flex:1;min-height:0;overflow:auto;padding:clamp(10px,1.6vw,18px);overscroll-behavior:contain}
+.ptable{
+  display:grid;grid-template-columns:repeat(18,minmax(40px,1fr));
+  grid-auto-rows:minmax(40px,auto);gap:3px;min-width:740px;
+}
+.tile{
+  position:relative;border-radius:5px;padding:3px 4px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.07);
+  background:var(--panel);
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  aspect-ratio:1/1;transition:transform .12s ease, box-shadow .12s ease, opacity .2s;
+  text-align:center;
+}
+.tile::before{
+  content:"";position:absolute;inset:0;opacity:.17;transition:opacity .15s;
+  background:radial-gradient(circle at 50% 118%, var(--c) 0%, transparent 72%);
+}
+.tile .z{position:absolute;top:2px;left:4px;font-family:var(--ff-mono);font-size:8px;color:var(--steel);letter-spacing:.02em}
+.tile .phase{position:absolute;top:3.5px;right:3.5px;width:5px;height:5px;border-radius:50%;background:var(--steel);opacity:.85}
+.tile .sym{font-family:var(--ff-display);font-weight:700;font-size:clamp(13px,1.35vw,17px);line-height:1;color:var(--c);letter-spacing:-.01em;margin-top:3px}
+.tile .nm{font-size:7.5px;color:var(--steel);line-height:1.15;margin-top:2px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile:hover{transform:translateY(-2px) scale(1.06);z-index:5;box-shadow:0 8px 22px rgba(0,0,0,.6), 0 0 0 1px var(--c)}
+.tile:hover::before{opacity:.34}
+.tile[data-on="1"]{box-shadow:0 0 0 2px var(--c), 0 6px 20px rgba(0,0,0,.55);z-index:4}
+.tile[data-on="1"]::before{opacity:.4}
+.tile.mute{opacity:.16;filter:saturate(.3)}
+.ptable .gap{grid-column:1/19;height:10px}
+.fnote{
+  grid-column:1/3;display:flex;align-items:center;justify-content:flex-end;
+  font-family:var(--ff-mono);font-size:8.5px;color:var(--steel);padding-right:6px;text-align:right;line-height:1.2;
+}
+
+/* ---------- controls ---------- */
+.ctl-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.seg{display:flex;flex-wrap:wrap;gap:2px;padding:3px;border:1px solid var(--rim);border-radius:8px;background:rgba(7,10,18,.5)}
+.seg button{padding:4px 9px;border-radius:5px;font-size:11.5px;color:var(--steel);transition:.15s}
+.seg button:hover{color:var(--chalk);background:rgba(124,155,255,.09)}
+.seg button[aria-pressed="true"]{background:var(--rim-hi);color:var(--chalk)}
+.field{
+  display:flex;align-items:center;gap:7px;border:1px solid var(--rim);border-radius:8px;
+  padding:5px 10px;background:rgba(7,10,18,.5);
+}
+.field input{background:none;border:0;outline:none;width:100%;font-size:12.5px}
+.field input::placeholder{color:#55617E}
+.field svg{flex:0 0 auto;opacity:.5}
+
+.slider{display:flex;align-items:center;gap:10px;flex:1 1 260px;min-width:220px}
+.slider input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--balmer),var(--copper),var(--sodium),var(--strontium));outline:none}
+.slider input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--chalk);
+  border:2px solid var(--void);box-shadow:0 0 0 1px var(--rim-hi),0 0 12px rgba(233,237,249,.5);cursor:grab;
+}
+.slider input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--chalk);border:2px solid var(--void);box-shadow:0 0 0 1px var(--rim-hi);cursor:grab}
+.tempout{font-family:var(--ff-mono);font-size:12px;min-width:104px;text-align:right;font-variant-numeric:tabular-nums}
+.tempout b{color:var(--sodium);font-weight:600}
+.tempout span{color:var(--steel);font-size:10.5px}
+
+.phasebar{display:flex;gap:14px;font-family:var(--ff-mono);font-size:10.5px;color:var(--steel);flex-wrap:wrap}
+.phasebar i{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:1px}
+.phasebar b{color:var(--chalk);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- legend ---------- */
+.legend{display:flex;flex-wrap:wrap;gap:5px;margin-top:14px}
+.legend button{
+  display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--steel);
+  border:1px solid var(--rim);border-radius:20px;padding:3px 10px 3px 7px;transition:.15s;
+}
+.legend button i{width:7px;height:7px;border-radius:2px;background:var(--c);box-shadow:0 0 7px var(--c)}
+.legend button:hover{color:var(--chalk);border-color:var(--rim-hi)}
+.legend button[aria-pressed="true"]{background:var(--panel-2);color:var(--chalk);border-color:var(--c)}
+
+/* ---------- inspector ---------- */
+.insp-head{display:flex;gap:13px;align-items:flex-start}
+.bigtile{
+  width:88px;height:88px;flex:0 0 auto;border-radius:10px;position:relative;overflow:hidden;
+  border:1px solid var(--c);background:var(--panel);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 0 28px -8px var(--c);
+}
+.bigtile::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 115%,var(--c),transparent 70%);opacity:.3}
+.bigtile .z{position:absolute;top:5px;left:8px;font-family:var(--ff-mono);font-size:10px;color:var(--steel)}
+.bigtile .m{position:absolute;bottom:5px;font-family:var(--ff-mono);font-size:9.5px;color:var(--steel)}
+.bigtile .sym{font-family:var(--ff-display);font-weight:800;font-size:37px;line-height:1;color:var(--c);position:relative}
+.insp-name{font-family:var(--ff-display);font-size:22px;font-weight:700;line-height:1.1;margin:0 0 5px;letter-spacing:-.02em;text-wrap:balance}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--c);
+  border:1px solid var(--c);border-radius:20px;padding:2px 9px;background:color-mix(in srgb,var(--c) 12%,transparent);
+}
+.insp-sub{font-family:var(--ff-mono);font-size:10.5px;color:var(--steel);margin-top:7px;line-height:1.6}
+
+.props{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:12px}
+.props dt{color:var(--steel);font-size:11.5px}
+.props dd{margin:0;font-family:var(--ff-mono);font-size:11.5px;text-align:right;font-variant-numeric:tabular-nums;color:var(--chalk)}
+.props dd.dim{color:#5D6A87}
+
+.fact{
+  font-size:12.5px;line-height:1.55;color:#C3CBE0;border-left:2px solid var(--c);
+  padding:2px 0 2px 11px;
+}
+.bar{height:3px;border-radius:3px;background:var(--rim);overflow:hidden;margin-top:5px}
+.bar i{display:block;height:100%;background:var(--c);border-radius:3px;transition:width .3s}
+
+.act{display:flex;gap:7px;flex-wrap:wrap}
+.act button{
+  flex:1 1 auto;padding:8px 12px;border-radius:7px;font-size:12px;font-weight:500;
+  border:1px solid var(--rim-hi);color:var(--chalk);background:var(--panel-2);transition:.15s;white-space:nowrap;
+}
+.act button:hover{background:var(--rim-hi);border-color:var(--balmer)}
+.act button.key{background:var(--balmer);color:#0A0E1A;border-color:var(--balmer);font-weight:600}
+.act button.key:hover{filter:brightness(1.12)}
+
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.canvas-holder{flex:1;position:relative;min-height:0}
+.hint{
+  flex:0 0 auto;padding:8px 16px;border-top:1px solid var(--rim);
+  font-family:var(--ff-mono);font-size:10.5px;color:var(--steel);
+  display:flex;gap:16px;flex-wrap:wrap;background:rgba(7,10,18,.55);
+}
+.hint kbd{
+  font-family:var(--ff-mono);border:1px solid var(--rim-hi);border-radius:3px;
+  padding:0 4px;color:var(--chalk);font-size:10px;
+}
+.overlay{position:absolute;pointer-events:none;font-family:var(--ff-mono)}
+.ov-tl{top:14px;left:16px}
+.ov-tr{top:14px;right:16px;text-align:right}
+.ov-bl{bottom:14px;left:16px}
+.iso{font-size:12px;color:var(--steel);line-height:1.7}
+.iso .big{font-family:var(--ff-display);font-size:30px;font-weight:800;color:var(--chalk);letter-spacing:-.02em;display:block;line-height:1.05}
+.iso sup,.iso sub{font-family:var(--ff-mono);font-size:10px;color:var(--steel)}
+.tag{display:inline-block;border-radius:4px;padding:1px 7px;font-size:10px;letter-spacing:.05em;text-transform:uppercase;margin-top:4px}
+
+/* ---------- steppers ---------- */
+.stepper{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.stepper .lbl{flex:1;min-width:0}
+.stepper .lbl .n{font-size:12.5px;display:flex;align-items:center;gap:7px}
+.stepper .lbl .n i{width:9px;height:9px;border-radius:50%;background:var(--c);box-shadow:0 0 9px var(--c);flex:0 0 auto}
+.stepper .lbl .d{font-family:var(--ff-mono);font-size:9.5px;color:var(--steel)}
+.stepper .val{font-family:var(--ff-mono);font-size:17px;font-variant-numeric:tabular-nums;min-width:38px;text-align:center;color:var(--c)}
+.stepper .pm{display:flex;gap:3px}
+.stepper .pm button{
+  width:27px;height:27px;border-radius:6px;border:1px solid var(--rim-hi);background:var(--panel-2);
+  font-size:15px;line-height:1;display:grid;place-items:center;color:var(--steel);transition:.13s;
+}
+.stepper .pm button:hover:not(:disabled){background:var(--c);color:#0A0E1A;border-color:var(--c)}
+.stepper .pm button:disabled{opacity:.28;cursor:not-allowed}
+
+/* ---------- chips ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{
+  border:1px solid var(--rim);border-radius:7px;padding:5px 9px;min-width:40px;
+  display:flex;flex-direction:column;align-items:center;gap:1px;transition:.13s;background:var(--panel);
+}
+.chip .s{font-family:var(--ff-display);font-weight:700;font-size:13px;color:var(--c);line-height:1}
+.chip .t{font-size:8.5px;color:var(--steel);line-height:1}
+.chip:hover{border-color:var(--c);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.45)}
+.chip[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 18%,var(--panel));border-color:var(--c);box-shadow:0 0 0 1px var(--c)}
+.preset{
+  display:block;width:100%;text-align:left;border:1px solid var(--rim);border-radius:7px;
+  padding:7px 10px;margin-bottom:5px;transition:.13s;background:var(--panel);
+}
+.preset:hover{border-color:var(--balmer);background:var(--panel-2);transform:translateX(2px)}
+.preset .f{font-family:var(--ff-mono);font-size:12px;color:var(--copper)}
+.preset .n{font-size:11px;color:var(--steel);margin-top:1px}
+
+.formula{font-family:var(--ff-display);font-size:26px;font-weight:800;letter-spacing:-.01em;line-height:1.1;word-break:break-all}
+.formula sub{font-size:.62em;font-weight:600;color:var(--steel)}
+.mol-name{font-size:13px;color:var(--copper);margin-top:3px;min-height:20px}
+.mol-name.unknown{color:var(--steel);font-style:italic}
+
+.toast{
+  position:absolute;left:50%;bottom:22px;transform:translateX(-50%) translateY(12px);
+  background:var(--panel-2);border:1px solid var(--rim-hi);border-radius:8px;
+  padding:8px 15px;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.6);
+  opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:20;white-space:nowrap;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  body{overflow:auto}
+  #app{height:auto;min-height:100%}
+  main{position:static;flex:1 1 auto}
+  .view{position:static;flex-direction:column}
+  .rail,.rail.right{width:auto;flex:0 0 auto;border:0;border-bottom:1px solid var(--rim);max-height:none}
+  .rail.right{border-bottom:0;border-top:1px solid var(--rim)}
+  .canvas-holder{height:56vh;min-height:340px}
+  .tablewrap{overflow-x:auto}
+  .brand h1{font-size:17px}
+  .modes button{padding:6px 10px;font-size:12px}
+  .modes button .k{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important;transition-duration:.06s!important}
+}
+</style>
+
+<div id="app">
+  <header class="rig">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"></div>
+      <div>
+        <h1>Orbital Forge</h1>
+        <div class="sub">Interactive chemistry bench &middot; 118 elements</div>
+      </div>
+    </div>
+    <nav class="modes" role="tablist" aria-label="Lab mode">
+      <button role="tab" id="tab-table" aria-selected="true" data-mode="table">Table <span class="k">1</span></button>
+      <button role="tab" id="tab-forge" aria-selected="false" data-mode="forge">Forge <span class="k">2</span></button>
+      <button role="tab" id="tab-bench" aria-selected="false" data-mode="bench">Bench <span class="k">3</span></button>
+    </nav>
+    <div class="spacer"></div>
+    <div class="readout-chip" id="rigStat">chamber <b>nominal</b></div>
+  </header>
+
+  <main>
+    <!-- ======================= TABLE ======================= -->
+    <section class="view" id="view-table" role="tabpanel" aria-labelledby="tab-table">
+      <aside class="rail" id="inspector"></aside>
+      <div class="stage">
+        <div class="sec" style="border-bottom:1px solid var(--rim)">
+          <div class="ctl-row">
+            <label class="field" style="flex:1 1 180px;min-width:150px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.3-4.3"/></svg>
+              <input id="search" type="search" placeholder="Search element, symbol or number" autocomplete="off">
+            </label>
+            <div class="seg" id="colorBy" role="group" aria-label="Colour the table by">
+              <button data-by="cat" aria-pressed="true">Category</button>
+              <button data-by="phase" aria-pressed="false">Phase</button>
+              <button data-by="eneg" aria-pressed="false">Electronegativity</button>
+              <button data-by="radius" aria-pressed="false">Atomic radius</button>
+              <button data-by="density" aria-pressed="false">Density</button>
+              <button data-by="year" aria-pressed="false">Discovered</button>
+            </div>
+          </div>
+          <div class="ctl-row" style="margin-bottom:0">
+            <div class="slider">
+              <span style="font-family:var(--ff-mono);font-size:10px;color:var(--steel);letter-spacing:.12em">TEMP</span>
+              <input id="temp" type="range" min="0" max="6000" step="5" value="293" aria-label="Chamber temperature in kelvin">
+              <div class="tempout"><b id="tempK">293 K</b><br><span id="tempC">20 &deg;C</span></div>
+            </div>
+            <div class="phasebar" id="phasebar"></div>
+          </div>
+        </div>
+        <div class="tablewrap">
+          <div class="ptable" id="ptable"></div>
+          <div class="legend" id="legend"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= FORGE ======================= -->
+    <section class="view" id="view-forge" role="tabpanel" aria-labelledby="tab-forge" hidden>
+      <aside class="rail">
+        <div class="sec">
+          <p class="eyebrow">Assemble</p>
+          <div class="stepper" style="--c:var(--strontium)">
+            <div class="lbl"><div class="n"><i></i>Protons</div><div class="d">sets the element</div></div>
+            <div class="val" id="vP">6</div>
+            <div class="pm"><button data-part="p" data-d="-1" aria-label="Remove proton">&minus;</button><button data-part="p" data-d="1" aria-label="Add proton">+</button></div>
+          </div>
+          <div class="stepper" style="--c:var(--steel)">
+            <div class="lbl"><div class="n"><i></i>Neutrons</div><div class="d">sets the isotope</div></div>
+            <div class="val" id="vN">6</div>
+            <div class="pm"><button data-part="n" data-d="-1" aria-label="Remove neutron">&minus;</button><button data-part="n" data-d="1" aria-label="Add neutron">+</button></div>
+          </div>
+          <div class="stepper" style="--c:var(--balmer)">
+            <div class="lbl"><div class="n"><i></i>Electrons</div><div class="d">sets the charge</div></div>
+            <div class="val" id="vE">6</div>
+            <div class="pm"><button data-part="e" data-d="-1" aria-label="Remove electron">&minus;</button><button data-part="e" data-d="1" aria-label="Add electron">+</button></div>
+          </div>
+        </div>
+        <div class="sec">
+          <p class="eyebrow">Quick set</p>
+          <div class="act" style="margin-bottom:7px">
+            <button id="qNeutral">Neutral atom</button>
+            <button id="qCommon">Common isotope</button>
+          </div>
+          <div class="act">
+            <button id="qStrip">Strip electrons</button>
+            <button id="qRandom">Surprise me</button>
+          </div>
+        </div>
+        <div class="sec" id="forgeProps"></div>
+        <div class="sec">
+          <p class="eyebrow">Jump to element</p>
+          <label class="field"><input id="forgeSearch" type="search" placeholder="Type a name or symbol" autocomplete="off"></label>
+          <div class="chips" id="forgeChips" style="margin-top:9px"></div>
+        </div>
+      </aside>
+      <div class="stage">
+        <div class="canvas-holder">
+          <canvas id="forgeCanvas"></canvas>
+          <div class="overlay ov-tl iso" id="isoTag"></div>
+          <div class="overlay ov-tr iso" id="stabTag"></div>
+          <div class="overlay ov-bl iso" id="cfgTag"></div>
+          <div class="toast" id="forgeToast"></div>
+        </div>
+        <div class="hint">
+          <span>Click the nucleus to excite it</span>
+          <span><kbd>&larr;</kbd><kbd>&rarr;</kbd> change element</span>
+          <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> change neutrons</span>
+          <span>Scroll on the stage to zoom</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= BENCH ======================= -->
+    <section class="view" id="view-bench" role="tabpanel" aria-labelledby="tab-bench" hidden>
+      <aside class="rail">
+        <div class="sec">
+          <p class="eyebrow">Atom tray</p>
+          <div class="chips" id="benchChips"></div>
+          <label class="field" style="margin-top:9px"><input id="benchSearch" type="search" placeholder="Any of the 118&hellip;" autocomplete="off"></label>
+          <div class="chips" id="benchFound" style="margin-top:7px"></div>
+        </div>
+        <div class="sec">
+          <p class="eyebrow">Build a known molecule</p>
+          <div id="presets"></div>
+        </div>
+        <div class="sec">
+          <p class="eyebrow">Bench</p>
+          <div class="act">
+            <button id="bShake">Shake</button>
+            <button id="bRelax">Relax</button>
+            <button id="bClear">Clear</button>
+          </div>
+        </div>
+      </aside>
+      <div class="stage">
+        <div class="canvas-holder">
+          <canvas id="benchCanvas"></canvas>
+          <div class="toast" id="benchToast"></div>
+        </div>
+        <div class="hint">
+          <span>Drag one atom onto another to bond</span>
+          <span>Click a bond to cycle single &rarr; double &rarr; triple &rarr; break</span>
+          <span>Faint dots are unfilled valence</span>
+        </div>
+      </div>
+      <aside class="rail right">
+        <div class="sec">
+          <p class="eyebrow">Readout</p>
+          <div class="formula" id="bFormula">&mdash;</div>
+          <div class="mol-name" id="bName"></div>
+        </div>
+        <div class="sec"><dl class="props" id="bProps"></dl></div>
+        <div class="sec" id="bNote"></div>
+      </aside>
+    </section>
+  </main>
+</div>
+
+<script>
+"use strict";
+/* ===========================================================
+   DATA  —  sym|name|mass|cat|eneg|state|radius(pm)|melt(K)|boil(K)|density(g/cm3)|year|fact
+   0 in a numeric slot means "not measured / not applicable".
+   =========================================================== */
+const RAW = `
+H|Hydrogen|1.008|nm|2.20|g|53|13.99|20.27|0.00009|1766|Makes up about 90% of all the atoms in the universe.
+He|Helium|4.0026|ng|0|g|31|0.95|4.22|0.00018|1868|Found in the Sun's spectrum before it was found on Earth.
+Li|Lithium|6.94|am|0.98|s|167|453.65|1615|0.534|1817|Light enough to float on water, which it then sets alight.
+Be|Beryllium|9.0122|ae|1.57|s|112|1560|2742|1.85|1798|Nearly transparent to X-rays, so it makes windows for them.
+B|Boron|10.81|ml|2.04|s|87|2349|4200|2.34|1808|Borax laundry powder is a boron mineral.
+C|Carbon|12.011|nm|2.55|s|67|3823|4098|2.267|0|Forms more compounds than every other element combined.
+N|Nitrogen|14.007|nm|3.04|g|56|63.15|77.36|0.00125|1772|78% of every breath you take.
+O|Oxygen|15.999|nm|3.44|g|48|54.36|90.2|0.00143|1774|Liquid oxygen is pale blue and sticks to a magnet.
+F|Fluorine|18.998|hg|3.98|g|42|53.53|85.03|0.0017|1886|The most reactive element there is.
+Ne|Neon|20.18|ng|0|g|38|24.56|27.07|0.0009|1898|Burns orange-red in a discharge tube, never any other colour.
+Na|Sodium|22.99|am|0.93|s|190|370.87|1156|0.971|1807|Bursts into flame on contact with water.
+Mg|Magnesium|24.305|ae|1.31|s|145|923|1363|1.738|1755|Burns with a white flame bright enough to hurt to look at.
+Al|Aluminium|26.982|pt|1.61|s|118|933.47|2792|2.698|1825|Once more precious than gold; Napoleon reserved it for guests.
+Si|Silicon|28.085|ml|1.9|s|111|1687|3538|2.33|1854|The backbone of every computer chip ever made.
+P|Phosphorus|30.974|nm|2.19|s|98|317.3|553.65|1.82|1669|White phosphorus glows in the dark all on its own.
+S|Sulfur|32.06|nm|2.58|s|88|388.36|717.87|2.067|0|Smells of struck matches and volcano rims.
+Cl|Chlorine|35.45|hg|3.16|g|79|171.6|239.11|0.0032|1774|A yellow-green gas that keeps swimming pools clean.
+Ar|Argon|39.948|ng|0|g|71|83.8|87.3|0.0018|1894|Fills light bulbs so the filament cannot burn away.
+K|Potassium|39.098|am|0.82|s|243|336.53|1032|0.862|1807|Bananas are faintly radioactive because of it.
+Ca|Calcium|40.078|ae|1.0|s|194|1115|1757|1.54|1808|99% of your body's supply sits inside your bones.
+Sc|Scandium|44.956|tm|1.36|s|184|1814|3109|2.989|1879|A baseball-sized lump costs more than a car.
+Ti|Titanium|47.867|tm|1.54|s|176|1941|3560|4.54|1791|As strong as steel and 45% lighter.
+V|Vanadium|50.942|tm|1.63|s|171|2183|3680|6.11|1801|Its salts come in four vivid, entirely different colours.
+Cr|Chromium|51.996|tm|1.66|s|166|2180|2944|7.15|1797|The red of a ruby and the green of an emerald are both chromium.
+Mn|Manganese|54.938|tm|1.55|s|161|1519|2334|7.44|1774|Makes steel hard enough for railway track.
+Fe|Iron|55.845|tm|1.83|s|156|1811|3134|7.874|0|The Earth's core is mostly a ball of it.
+Co|Cobalt|58.933|tm|1.88|s|152|1768|3200|8.86|1735|Named after the goblins German miners blamed for bad ore.
+Ni|Nickel|58.693|tm|1.91|s|149|1728|3186|8.912|1751|A US nickel coin is only 25% nickel.
+Cu|Copper|63.546|tm|1.9|s|145|1357.77|2835|8.96|0|The first metal humans ever smelted.
+Zn|Zinc|65.38|tm|1.65|s|142|692.88|1180|7.134|1746|Your sense of taste and smell depend on it.
+Ga|Gallium|69.723|pt|1.81|s|136|302.91|2673|5.907|1875|Melts in the palm of your hand.
+Ge|Germanium|72.63|ml|2.01|s|125|1211.4|3106|5.323|1886|The very first transistor was cut from it.
+As|Arsenic|74.922|ml|2.18|s|114|1090|887|5.776|1250|The classic poison of Victorian detective novels.
+Se|Selenium|78.971|nm|2.55|s|103|453|958|4.809|1817|The active ingredient in anti-dandruff shampoo.
+Br|Bromine|79.904|hg|2.96|l|94|265.8|332|3.122|1826|The only nonmetal that is a liquid at room temperature.
+Kr|Krypton|83.798|ng|3.0|g|88|115.79|119.93|0.00375|1898|Its orange line once defined the length of the metre.
+Rb|Rubidium|85.468|am|0.82|s|265|312.46|961|1.532|1861|Would melt in your hand if it were not so violently reactive.
+Sr|Strontium|87.62|ae|0.95|s|219|1050|1655|2.64|1787|Paints fireworks bright crimson.
+Y|Yttrium|88.906|tm|1.22|s|212|1799|3609|4.469|1794|Named after Ytterby, a Swedish village that named four elements.
+Zr|Zirconium|91.224|tm|1.33|s|206|2128|4682|6.506|1789|Cubic zirconia fakes a diamond convincingly.
+Nb|Niobium|92.906|tm|1.6|s|198|2750|5017|8.57|1801|Anodises into peacock blues, golds and purples.
+Mo|Molybdenum|95.95|tm|2.16|s|190|2896|4912|10.22|1781|Plants cannot fix nitrogen without it.
+Tc|Technetium|98|tm|1.9|s|183|2430|4538|11.5|1937|The first element ever made by human hands.
+Ru|Ruthenium|101.07|tm|2.2|s|178|2607|4423|12.37|1844|Hardens the nibs of fountain pens.
+Rh|Rhodium|102.91|tm|2.28|s|173|2237|3968|12.41|1803|Costs several times more than gold.
+Pd|Palladium|106.42|tm|2.2|s|169|1828.05|3236|12.02|1803|Soaks up 900 times its own volume in hydrogen.
+Ag|Silver|107.87|tm|1.93|s|165|1234.93|2435|10.501|0|The best electrical conductor of any element.
+Cd|Cadmium|112.41|tm|1.69|s|161|594.22|1040|8.69|1817|Gave the Impressionists their cadmium yellow.
+In|Indium|114.82|pt|1.78|s|156|429.75|2345|7.31|1863|Makes touchscreens conduct while staying clear.
+Sn|Tin|118.71|pt|1.96|s|145|505.08|2875|7.287|0|Bends with an audible crackle called the tin cry.
+Sb|Antimony|121.76|ml|2.05|s|133|903.78|1860|6.685|1540|Ancient Egyptians wore it as kohl eyeliner.
+Te|Tellurium|127.6|ml|2.1|s|123|722.66|1261|6.232|1782|Rarer in Earth's crust than platinum.
+I|Iodine|126.9|hg|2.66|s|115|386.85|457.4|4.93|1811|Added to table salt to protect the thyroid.
+Xe|Xenon|131.29|ng|2.6|g|108|161.4|165.03|0.0059|1898|Drives the ion engines on deep-space probes.
+Cs|Caesium|132.91|am|0.79|s|298|301.59|944|1.873|1860|The second is officially defined by its atomic clock.
+Ba|Barium|137.33|ae|0.89|s|253|1000|2170|3.594|1808|Swallowed as a barium meal so the gut shows on X-rays.
+La|Lanthanum|138.91|ln|1.1|s|226|1193|3737|6.145|1839|Half the alloy in a hybrid car's battery.
+Ce|Cerium|140.12|ln|1.12|s|210|1068|3716|6.77|1803|The spark in a lighter flint.
+Pr|Praseodymium|140.91|ln|1.13|s|247|1208|3793|6.773|1885|Tints welders' goggles to block the glare.
+Nd|Neodymium|144.24|ln|1.14|s|206|1297|3347|7.007|1885|Makes the strongest permanent magnets ever built.
+Pm|Promethium|145|ln|1.13|s|205|1373|3273|7.26|1945|Every single atom of it is radioactive.
+Sm|Samarium|150.36|ln|1.17|s|238|1345|2067|7.52|1879|Its magnets keep working at blistering temperatures.
+Eu|Europium|151.96|ln|1.2|s|231|1099|1802|5.243|1901|The red pixels of old CRT televisions.
+Gd|Gadolinium|157.25|ln|1.2|s|233|1585|3546|7.895|1880|Injected as the contrast dye for MRI scans.
+Tb|Terbium|158.93|ln|1.2|s|225|1629|3503|8.229|1843|Physically changes shape in a magnetic field.
+Dy|Dysprosium|162.5|ln|1.22|s|228|1680|2840|8.55|1886|Keeps wind-turbine magnets working when they get hot.
+Ho|Holmium|164.93|ln|1.23|s|226|1734|2993|8.795|1878|Has the strongest magnetic moment of any element.
+Er|Erbium|167.26|ln|1.24|s|226|1802|3141|9.066|1842|Amplifies the light inside undersea fibre cables.
+Tm|Thulium|168.93|ln|1.25|s|222|1818|2223|9.321|1879|The rarest of the stable lanthanides.
+Yb|Ytterbium|173.05|ln|1.1|s|222|1097|1469|6.965|1878|Runs the most accurate clocks ever built.
+Lu|Lutetium|174.97|ln|1.27|s|217|1925|3675|9.84|1907|The densest and hardest of the lanthanides.
+Hf|Hafnium|178.49|tm|1.3|s|208|2506|4876|13.31|1923|Control rods in nuclear submarines are made of it.
+Ta|Tantalum|180.95|tm|1.5|s|200|3290|5731|16.654|1802|Inside the capacitor of almost every mobile phone.
+W|Tungsten|183.84|tm|2.36|s|193|3695|5828|19.25|1783|Melts at a higher temperature than any other element.
+Re|Rhenium|186.21|tm|1.9|s|188|3459|5869|21.02|1925|Jet engine turbine blades depend on it.
+Os|Osmium|190.23|tm|2.2|s|185|3306|5285|22.61|1803|The densest element that occurs in nature.
+Ir|Iridium|192.22|tm|2.2|s|180|2719|4701|22.56|1803|A worldwide spike of it in clay marks the dinosaurs' end.
+Pt|Platinum|195.08|tm|2.28|s|177|2041.4|4098|21.46|1735|A catalytic converter holds only a few grams.
+Au|Gold|196.97|tm|2.54|s|174|1337.33|3129|19.282|0|All the gold ever mined would fit in a 22-metre cube.
+Hg|Mercury|200.59|tm|2.0|l|171|234.32|629.88|13.534|0|The only metal that is liquid at room temperature.
+Tl|Thallium|204.38|pt|1.62|s|156|577|1746|11.85|1861|Odourless and tasteless: the poisoner's poison.
+Pb|Lead|207.2|pt|2.33|s|154|600.61|2022|11.342|0|Roman lead plumbing is where the word plumber comes from.
+Bi|Bismuth|208.98|pt|2.02|s|143|544.55|1837|9.807|1753|Grows crystals in iridescent rainbow staircases.
+Po|Polonium|209|pt|2.0|s|135|527|1235|9.32|1898|Marie Curie named it after her native Poland.
+At|Astatine|210|hg|2.2|s|202|575|610|7|1940|Less than a gram of it exists in the whole crust.
+Rn|Radon|222|ng|2.2|g|120|202|211.3|0.00973|1900|Seeps up out of the ground into basements.
+Fr|Francium|223|am|0.7|s|348|300|950|1.87|1939|Only about 30 grams exist on Earth at any moment.
+Ra|Radium|226|ae|0.9|s|283|973|2010|5.5|1898|Once painted onto watch dials so they would glow.
+Ac|Actinium|227|an|1.1|s|260|1323|3471|10.07|1899|Glows pale blue in a dark room.
+Th|Thorium|232.04|an|1.3|s|237|2115|5061|11.72|1829|More abundant than uranium and a candidate reactor fuel.
+Pa|Protactinium|231.04|an|1.5|s|243|1841|4300|15.37|1913|One of the rarest and most expensive natural elements.
+U|Uranium|238.03|an|1.38|s|240|1405.3|4404|18.95|1789|A kilogram holds the energy of 1,500 tonnes of coal.
+Np|Neptunium|237|an|1.36|s|221|917|4273|20.45|1940|Named for the planet just beyond Uranus.
+Pu|Plutonium|244|an|1.28|s|243|912.5|3501|19.84|1940|Powers the spacecraft sent beyond Jupiter.
+Am|Americium|243|an|1.13|s|244|1449|2880|13.69|1944|Sitting inside most household smoke detectors.
+Cm|Curium|247|an|1.28|s|245|1613|3383|13.51|1944|Glows purple from its own radioactivity.
+Bk|Berkelium|247|an|1.3|s|244|1259|2900|14.79|1949|Barely a gram has ever been made.
+Cf|Californium|251|an|1.3|s|245|1173|1743|15.1|1950|One microgram throws off 170 million neutrons a minute.
+Es|Einsteinium|252|an|1.3|s|245|1133|1269|8.84|1952|First spotted in the fallout of a hydrogen bomb.
+Fm|Fermium|257|an|1.3|s|245|1800|0|9.7|1952|Never made in a lump big enough to see.
+Md|Mendelevium|258|an|1.3|s|246|1100|0|10.3|1955|Named for the man who invented the periodic table.
+No|Nobelium|259|an|1.3|s|246|1100|0|9.9|1957|Its discovery was disputed for more than a decade.
+Lr|Lawrencium|266|an|1.3|s|246|1900|0|15.6|1961|The last of the actinides.
+Rf|Rutherfordium|267|tm|0|s|250|2400|5800|23.2|1964|The first of the superheavy elements.
+Db|Dubnium|268|tm|0|s|249|0|0|29.3|1967|Named for Dubna, the Russian town that made it.
+Sg|Seaborgium|269|tm|0|s|243|0|0|35|1974|Controversially named after a scientist still alive.
+Bh|Bohrium|270|tm|0|s|241|0|0|37.1|1981|Only a few dozen atoms have ever existed.
+Hs|Hassium|269|tm|0|s|230|0|0|40.7|1984|Its longest-lived atoms survive about ten seconds.
+Mt|Meitnerium|278|un|0|s|228|0|0|37.4|1982|Named for Lise Meitner, who explained nuclear fission.
+Ds|Darmstadtium|281|un|0|s|232|0|0|34.8|1994|Made by firing nickel atoms at lead.
+Rg|Roentgenium|282|un|0|s|238|0|0|28.7|1994|Named on the centenary of the X-ray.
+Cn|Copernicium|285|un|0|g|238|283|340|14|1996|Probably a gas at room temperature, oddly for a metal.
+Nh|Nihonium|286|un|0|s|240|700|1400|16|2003|The first element ever named in Asia.
+Fl|Flerovium|289|un|0|s|240|200|380|14|1998|Named for the Flerov Laboratory in Russia.
+Mc|Moscovium|290|un|0|s|240|700|1400|13.5|2003|Confirmed in 2013, decades after the first rumours.
+Lv|Livermorium|293|un|0|s|240|709|1085|12.9|2000|Lives for a few thousandths of a second.
+Ts|Tennessine|294|un|0|s|240|723|883|7.2|2010|A handful of atoms is the entire world supply.
+Og|Oganesson|294|un|0|g|240|325|450|5|2002|The heaviest element ever created.
+`.trim().split("\n");
+
+const CATS={
+  am:["Alkali metal","#FF6B6B"], ae:["Alkaline earth","#FF9E4F"],
+  tm:["Transition metal","#7C9BFF"], pt:["Post-transition metal","#5FC9E8"],
+  ml:["Metalloid","#49D6C0"], nm:["Reactive nonmetal","#8FDB6E"],
+  hg:["Halogen","#E8D44D"], ng:["Noble gas","#C08CFF"],
+  ln:["Lanthanide","#FF8FC7"], an:["Actinide","#E4569A"],
+  un:["Unknown properties","#7C879F"]
+};
+const PHASE={s:["Solid","#7C9BFF"],l:["Liquid","#49D6C0"],g:["Gas","#FFB03B"],y:["Unknown","#7C879F"]};
+
+/* CPK-style colours for molecule rendering; anything absent falls back to its category hue. */
+const CPK={H:"#F2F5FF",C:"#5B6478",N:"#4F7DFF",O:"#FF4B45",F:"#8FE060",Cl:"#3FD46B",Br:"#C0553D",
+I:"#A64BC4",S:"#FFD123",P:"#FF8A2B",B:"#FFAFAF",Si:"#E7C2A0",Se:"#FF9B4A",
+Li:"#CC80FF",Na:"#AB5CF2",K:"#8F55D8",Rb:"#7A45C8",Cs:"#6B3BB8",
+Be:"#B6FF00",Mg:"#7EE84C",Ca:"#4BE05E",Sr:"#35D96E",Ba:"#1FC96B",
+Fe:"#E06633",Cu:"#C88033",Zn:"#8B8FC0",Ni:"#57D059",Co:"#F090A0",Mn:"#A07AC7",
+Cr:"#8A99C7",Ti:"#C3C6CB",Al:"#C4ADAD",Ag:"#CFD3DA",Au:"#FFC93C",Hg:"#B8B8D0",
+Pb:"#6B6E78",Sn:"#7E8F8F",He:"#62E7E7",Ne:"#6BE0D6",Ar:"#63D9E6",Kr:"#5FC5E8",Xe:"#6FA8E8",U:"#3D8FFF"};
+
+/* Ground-state shell occupancies that break the simple aufbau order. */
+const SHELL_EXC={24:[2,8,13,1],29:[2,8,18,1],41:[2,8,18,12,1],42:[2,8,18,13,1],
+44:[2,8,18,15,1],45:[2,8,18,16,1],46:[2,8,18,18],47:[2,8,18,18,1],
+57:[2,8,18,18,9,2],58:[2,8,18,19,9,2],64:[2,8,18,25,9,2],
+78:[2,8,18,32,17,1],79:[2,8,18,32,18,1],
+89:[2,8,18,32,18,9,2],90:[2,8,18,32,18,10,2],91:[2,8,18,32,20,9,2],
+92:[2,8,18,32,21,9,2],93:[2,8,18,32,22,9,2],96:[2,8,18,32,25,9,2],103:[2,8,18,32,32,8,3]};
+
+const ORDER=[[1,"s"],[2,"s"],[2,"p"],[3,"s"],[3,"p"],[4,"s"],[3,"d"],[4,"p"],[5,"s"],[4,"d"],[5,"p"],
+[6,"s"],[4,"f"],[5,"d"],[6,"p"],[7,"s"],[5,"f"],[6,"d"],[7,"p"]];
+const CAP={s:2,p:6,d:10,f:14};
+const SUP={0:"⁰",1:"¹",2:"²",3:"³",4:"⁴",5:"⁵",6:"⁶",7:"⁷",8:"⁸",9:"⁹"};
+const sup=n=>String(n).split("").map(d=>SUP[d]).join("");
+
+function aufbau(count){
+  const out=[]; let left=count;
+  for(const [n,l] of ORDER){ if(left<=0) break; const k=Math.min(CAP[l],left); out.push([n,l,k]); left-=k; }
+  return out;
+}
+function shellsFromSub(sub){
+  const m=[]; for(const [n,,k] of sub){ m[n-1]=(m[n-1]||0)+k; }
+  for(let i=0;i<m.length;i++) if(!m[i]) m[i]=0;
+  return m;
+}
+function shellsFor(z,e){
+  if(e===z && SHELL_EXC[z]) return SHELL_EXC[z].slice();
+  return shellsFromSub(aufbau(e));
+}
+function configString(e,short){
+  const sub=aufbau(e);
+  const NOBLE=[[2,"He"],[10,"Ne"],[18,"Ar"],[36,"Kr"],[54,"Xe"],[86,"Rn"]];
+  let start=0,prefix="";
+  if(short){
+    for(let i=NOBLE.length-1;i>=0;i--){
+      if(e>NOBLE[i][0]){ prefix="["+NOBLE[i][1]+"] "; let acc=0;
+        for(let j=0;j<sub.length;j++){ acc+=sub[j][2]; if(acc===NOBLE[i][0]){ start=j+1; break; } }
+        break; }
+    }
+  }
+  return prefix+sub.slice(start).map(([n,l,k])=>n+l+sup(k)).join(" ");
+}
+
+/* Grid position on the standard 18-column table. */
+function gridPos(z){
+  if(z===1) return [1,1]; if(z===2) return [18,1];
+  if(z<=4) return [z-2,2]; if(z<=10) return [z+8,2];
+  if(z<=12) return [z-10,3]; if(z<=18) return [z,3];
+  if(z<=36) return [z-18,4]; if(z<=54) return [z-36,5];
+  if(z<=56) return [z-54,6]; if(z<=71) return [z-54,9];
+  if(z<=86) return [z-68,6]; if(z<=88) return [z-86,7];
+  if(z<=103) return [z-86,10]; return [z-100,7];
+}
+const VAL_OVER={H:1,He:0,B:3,C:4,N:3,O:2,F:1,Al:3,Si:4,P:3,S:2,Cl:1,
+Fe:3,Cu:2,Zn:2,Ag:1,Au:1,Cr:3,Mn:2,Ni:2,Co:2,Ti:4,Sn:4,Pb:2,Se:2,As:3,Sb:3,Bi:3,Br:1,I:1};
+
+const ELS=RAW.map((line,i)=>{
+  const p=line.split("|"); const z=i+1;
+  const [col,row]=gridPos(z);
+  const period=row<=7?row:(row===9?6:7);
+  const group=row<=7?col:3;
+  const cat=p[3];
+  const e={
+    z, sym:p[0], name:p[1], mass:+p[2], cat,
+    catName:CATS[cat][0], color:CATS[cat][1],
+    eneg:+p[4], baseState:p[5], radius:+p[6],
+    melt:+p[7], boil:+p[8], density:+p[9], year:+p[10], fact:p[11],
+    col, row, period, group
+  };
+  e.shells=shellsFor(z,z);
+  e.config=configString(z,true);
+  e.configFull=configString(z,false);
+  e.valence=VAL_OVER[e.sym]!=null?VAL_OVER[e.sym]
+    :group===1?1:group===2?2:group===18?0
+    :(group>=13&&group<=17)?[3,4,3,2,1][group-13]:2;
+  e.cpk=CPK[e.sym]||e.color;
+  e.n0=Math.round(e.mass)-z;
+  return e;
+});
+const BY_SYM={}; ELS.forEach(e=>BY_SYM[e.sym]=e);
+
+function phaseAt(e,T){
+  if(!e.melt&&!e.boil) return "y";
+  if(e.boil&&T>=e.boil) return "g";
+  if(e.melt&&T>=e.melt) return e.boil?"l":"g";
+  return "s";
+}
+function stability(z,n){
+  if(z<1) return {label:"No nucleus",tone:"#7C879F",level:4,note:"Add a proton to make an element."};
+  const e=ELS[z-1], d=n-e.n0;
+  if(n<0) return {label:"Impossible",tone:"#FF5C7A",level:4,note:""};
+  if(z>82){
+    const lvl=Math.abs(d)<=3?2:3;
+    return {label:"Radioactive",tone:"#FFB03B",level:lvl,
+      note:"Every isotope above bismuth decays — this one included."};
+  }
+  const a=Math.abs(d);
+  if(a===0) return {label:"Most abundant",tone:"#49D6C0",level:0,note:"The isotope you would find in nature."};
+  if(a<=1) return {label:"Stable",tone:"#49D6C0",level:0,note:"Sits inside the band of stability."};
+  if(a<=3) return {label:"Near the band",tone:"#8FDB6E",level:1,note:"Mildly unstable — a long half-life."};
+  if(a<=6) return {label:"Radioactive",tone:"#FFB03B",level:2,note:(d>0?"Neutron-rich":"Proton-rich")+" and prone to beta decay."};
+  if(a<=12) return {label:"Highly unstable",tone:"#FF8A5C",level:3,note:"Would decay in a fraction of a second."};
+  return {label:"Would not hold",tone:"#FF5C7A",level:4,note:"Far outside any known nucleus. It falls apart instantly."};
+}
+const fmt=(v,u,dp)=>v?v.toFixed(dp==null?2:dp)+(u||""):"—";
+const el=id=>document.getElementById(id);
+function toast(node,msg){ node.textContent=msg; node.classList.add("on");
+  clearTimeout(node._t); node._t=setTimeout(()=>node.classList.remove("on"),1700); }
+
+/* =========================== STATE =========================== */
+const S={mode:"table",T:293,by:"cat",filterCat:null,query:"",sel:6,
+  forge:{p:6,n:6,e:6,zoom:1,pulse:0}};
+
+/* =========================== TABLE =========================== */
+const ptable=el("ptable"), legendBox=el("legend"), inspector=el("inspector");
+const tiles=[];
+function buildTable(){
+  const frag=document.createDocumentFragment();
+  ELS.forEach(e=>{
+    const b=document.createElement("button");
+    b.className="tile"; b.style.setProperty("--c",e.color);
+    b.style.gridColumn=e.col; b.style.gridRow=e.row;
+    b.dataset.z=e.z; b.type="button";
+    b.setAttribute("aria-label",e.name+", element "+e.z);
+    b.innerHTML='<span class="z">'+e.z+'</span><span class="phase"></span>'+
+      '<span class="sym">'+e.sym+'</span><span class="nm">'+e.name+'</span>';
+    b.addEventListener("pointerenter",()=>select(e.z,false));
+    b.addEventListener("focus",()=>select(e.z,false));
+    b.addEventListener("click",()=>{select(e.z,true);setMode("forge");});
+    tiles[e.z]=b; frag.appendChild(b);
+  });
+  const g=document.createElement("div"); g.className="gap"; g.style.gridRow=8; frag.appendChild(g);
+  [[9,"lanthanides","57–71"],[10,"actinides","89–103"]].forEach(([r,a,b2])=>{
+    const n=document.createElement("div"); n.className="fnote"; n.style.gridRow=r;
+    n.innerHTML=a+"<br>"+b2; frag.appendChild(n);
+  });
+  ptable.appendChild(frag);
+
+  Object.entries(CATS).forEach(([k,[name,c]])=>{
+    const b=document.createElement("button");
+    b.style.setProperty("--c",c); b.type="button";
+    b.setAttribute("aria-pressed","false");
+    b.innerHTML='<i></i>'+name;
+    b.addEventListener("click",()=>{
+      S.filterCat=S.filterCat===k?null:k;
+      [...legendBox.children].forEach(c2=>c2.setAttribute("aria-pressed",String(c2.dataset.k===S.filterCat)));
+      paintTable();
+    });
+    b.dataset.k=k; legendBox.appendChild(b);
+  });
+}
+const ramp=(t,stops)=>{
+  t=Math.max(0,Math.min(1,t)); const i=Math.min(stops.length-2,Math.floor(t*(stops.length-1)));
+  const f=t*(stops.length-1)-i, a=stops[i], b=stops[i+1];
+  const h=x=>[parseInt(x.slice(1,3),16),parseInt(x.slice(3,5),16),parseInt(x.slice(5,7),16)];
+  const A=h(a),B=h(b);
+  return "rgb("+A.map((v,j)=>Math.round(v+(B[j]-v)*f)).join(",")+")";
+};
+const RAMP=["#2B3557","#4F6BD8","#49D6C0","#FFB03B","#FF5C7A"];
+function tileColor(e){
+  if(S.by==="cat") return e.color;
+  if(S.by==="phase") return PHASE[phaseAt(e,S.T)][1];
+  const v={eneg:e.eneg/3.98,radius:(e.radius-31)/(348-31),
+    density:Math.log10(Math.max(e.density,0.00009)/0.00009)/Math.log10(40.7/0.00009),
+    year:e.year?(e.year-1660)/(2010-1660):0}[S.by];
+  if(!v&&v!==0) return "#3A4870";
+  if(S.by==="year"&&!e.year) return "#3A4870";
+  if(S.by==="eneg"&&!e.eneg) return "#3A4870";
+  return ramp(v,RAMP);
+}
+function paintTable(){
+  const q=S.query.trim().toLowerCase();
+  const counts={s:0,l:0,g:0,y:0};
+  ELS.forEach(e=>{
+    const t=tiles[e.z]; const ph=phaseAt(e,S.T); counts[ph]++;
+    t.style.setProperty("--c",tileColor(e));
+    t.querySelector(".phase").style.background=PHASE[ph][1];
+    const hit=!q||e.name.toLowerCase().includes(q)||e.sym.toLowerCase()===q||
+      e.sym.toLowerCase().startsWith(q)||String(e.z)===q;
+    const catOk=!S.filterCat||e.cat===S.filterCat;
+    t.classList.toggle("mute",!(hit&&catOk));
+    t.dataset.on=e.z===S.sel?"1":"0";
+  });
+  el("phasebar").innerHTML=["s","l","g","y"].map(k=>
+    '<span><i style="background:'+PHASE[k][1]+'"></i>'+PHASE[k][0]+' <b>'+counts[k]+'</b></span>').join("");
+}
+function select(z,scroll){
+  S.sel=z; paintTable(); renderInspector(ELS[z-1]);
+  if(scroll){ S.forge.p=z; S.forge.n=ELS[z-1].n0; S.forge.e=z; syncForge(); }
+}
+function renderInspector(e){
+  const ph=phaseAt(e,S.T), st=stability(e.z,e.n0);
+  inspector.innerHTML=
+  '<div class="sec"><div class="insp-head" style="--c:'+e.color+'">'+
+    '<div class="bigtile" style="--c:'+e.color+'"><span class="z">'+e.z+'</span>'+
+      '<span class="sym">'+e.sym+'</span><span class="m">'+e.mass+'</span></div>'+
+    '<div style="min-width:0"><h2 class="insp-name">'+e.name+'</h2>'+
+      '<span class="pill" style="--c:'+e.color+'">'+e.catName+'</span>'+
+      '<div class="insp-sub">group '+e.group+' &middot; period '+e.period+'<br>'+
+      '<span style="color:'+PHASE[ph][1]+'">'+PHASE[ph][0]+'</span> at '+Math.round(S.T)+' K</div>'+
+    '</div></div></div>'+
+  '<div class="sec"><p class="eyebrow">Electron shells</p>'+shellSVG(e)+
+    '<div style="font-family:var(--ff-mono);font-size:11px;color:var(--steel);margin-top:8px;word-break:break-word">'+e.config+'</div>'+
+    '<div style="font-family:var(--ff-mono);font-size:11px;color:var(--chalk);margin-top:4px">'+
+      e.shells.join(" · ")+'  <span style="color:var(--steel)">('+e.valence+' bonding)</span></div></div>'+
+  '<div class="sec"><p class="eyebrow">Measured</p><dl class="props">'+
+    row("Atomic mass",e.mass+" u")+
+    row("Electronegativity",e.eneg?e.eneg.toFixed(2):"—")+
+    row("Atomic radius",e.radius+" pm")+
+    row("Density",e.density?(e.density<0.01?e.density.toFixed(5):e.density.toFixed(3))+" g/cm³":"—")+
+    row("Melting point",e.melt?Math.round(e.melt)+" K":"—")+
+    row("Boiling point",e.boil?Math.round(e.boil)+" K":"—")+
+    row("Common isotope",e.sym+"-"+(e.z+e.n0))+
+    row("Discovered",e.year?(e.year<0?Math.abs(e.year)+" BCE":e.year):"prehistoric")+
+  '</dl></div>'+
+  '<div class="sec"><p class="eyebrow">Note</p><p class="fact" style="--c:'+e.color+'">'+e.fact+'</p></div>'+
+  '<div class="sec"><div class="act">'+
+    '<button class="key" data-go="forge">Forge this atom</button>'+
+    '<button data-go="bench">Add to bench</button></div></div>';
+  inspector.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>{
+    if(b.dataset.go==="forge"){ S.forge.p=e.z;S.forge.n=e.n0;S.forge.e=e.z;syncForge();setMode("forge"); }
+    else { addAtom(e.sym); setMode("bench"); toast(el("benchToast"),e.name+" added to the bench"); }
+  }));
+}
+const row=(k,v)=>'<dt>'+k+'</dt><dd'+(v==="—"?' class="dim"':'')+'>'+v+'</dd>';
+function shellSVG(e){
+  const sh=e.shells.filter(x=>x>0), R=13+sh.length*8.5, W=190, H=Math.min(120,R*2+14);
+  let s='<svg viewBox="'+(-W/2)+' '+(-H/2)+' '+W+' '+H+'" style="width:100%;height:'+H+'px;overflow:visible">'+
+    '<circle cx="0" cy="0" r="7" fill="'+e.color+'" opacity=".95"/>'+
+    '<circle cx="0" cy="0" r="7" fill="none" stroke="'+e.color+'" stroke-width="1" opacity=".5"><animate attributeName="r" values="7;11;7" dur="2.6s" repeatCount="indefinite"/><animate attributeName="opacity" values=".5;0;.5" dur="2.6s" repeatCount="indefinite"/></circle>';
+  sh.forEach((n,i)=>{
+    const r=13+(i+1)*8.5;
+    s+='<circle cx="0" cy="0" r="'+r+'" fill="none" stroke="'+e.color+'" stroke-width=".7" opacity=".28"/>';
+    s+='<g><animateTransform attributeName="transform" type="rotate" from="0" to="'+((i%2?-360:360))+'" dur="'+(7+i*2.6)+'s" repeatCount="indefinite"/>';
+    for(let k=0;k<n;k++){ const a=k/n*Math.PI*2;
+      s+='<circle cx="'+(Math.cos(a)*r).toFixed(2)+'" cy="'+(Math.sin(a)*r).toFixed(2)+'" r="1.7" fill="#E9EDF9"/>'; }
+    s+='</g>';
+  });
+  return s+'</svg>';
+}
+
+/* =========================== canvas helper =========================== */
+function setupCanvas(cv){
+  const ctx=cv.getContext("2d"); const st={ctx,w:0,h:0};
+  const fit=()=>{ const r=cv.getBoundingClientRect(); const d=Math.min(2,window.devicePixelRatio||1);
+    st.w=Math.max(1,r.width); st.h=Math.max(1,r.height);
+    cv.width=Math.round(st.w*d); cv.height=Math.round(st.h*d);
+    ctx.setTransform(d,0,0,d,0,0); };
+  new ResizeObserver(fit).observe(cv); fit();
+  return st;
+}
+const REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* =========================== FORGE =========================== */
+const fc=el("forgeCanvas"), F=setupCanvas(fc);
+const nucSeed=[]; for(let i=0;i<400;i++){ const a=i*2.399963, r=Math.sqrt(i)*0.62;
+  nucSeed.push([Math.cos(a)*r,Math.sin(a)*r,(i*0.7919)%1]); }
+let sparks=[];
+
+function forgeEl(){ return S.forge.p>=1&&S.forge.p<=118?ELS[S.forge.p-1]:null; }
+function clampForge(){ const f=S.forge;
+  f.p=Math.max(0,Math.min(118,f.p)); f.n=Math.max(0,Math.min(200,f.n));
+  f.e=Math.max(0,Math.min(150,f.e)); }
+function syncForge(){
+  clampForge(); const f=S.forge, e=forgeEl();
+  el("vP").textContent=f.p; el("vN").textContent=f.n; el("vE").textContent=f.e;
+  document.querySelectorAll('[data-part]').forEach(b=>{
+    const v=f[b.dataset.part], d=+b.dataset.d;
+    b.disabled = (v+d<0)||(b.dataset.part==="p"&&v+d>118);
+  });
+  const A=f.p+f.n, q=f.p-f.e;
+  const st=stability(f.p,f.n);
+  const chargeTxt=q===0?"neutral":(q>0?"+"+q:String(q));
+  el("isoTag").innerHTML = e
+    ? '<sup>'+A+'</sup><sub style="margin-left:-6px">'+f.p+'</sub> <span class="big" style="color:'+e.color+'">'+e.sym+
+      (q!==0?'<sup style="font-size:15px;color:'+(q>0?"#FF5C7A":"#7C9BFF")+'">'+(q>0?"+":"−")+(Math.abs(q)>1?Math.abs(q):"")+'</sup>':"")+
+      '</span>'+e.name+' · '+A+' nucleons<br><span style="color:var(--steel)">charge '+chargeTxt+
+      (q!==0?" · "+(q>0?"cation":"anion"):"")+'</span>'
+    : '<span class="big" style="color:var(--steel)">—</span>no protons, no element';
+  el("stabTag").innerHTML = '<span class="tag" style="background:'+st.tone+'22;color:'+st.tone+';border:1px solid '+st.tone+'55">'+st.label+'</span>'+
+    '<div style="max-width:230px;color:var(--steel);font-size:10.5px;line-height:1.5;margin-top:5px">'+st.note+'</div>';
+  el("cfgTag").innerHTML = f.e
+    ? '<span style="color:var(--steel)">configuration</span><br><span style="color:var(--chalk);font-size:12px">'+configString(f.e,true)+'</span>'
+    : '<span style="color:var(--steel)">bare nucleus — no electrons</span>';
+  renderForgeProps(e,st);
+  el("rigStat").innerHTML = e?('forging <b>'+e.name+'-'+A+'</b>'):'chamber <b>empty</b>';
+  paintTable();
+}
+function renderForgeProps(e,st){
+  const f=S.forge, box=el("forgeProps");
+  if(!e){ box.innerHTML='<p class="eyebrow">Readout</p><p style="color:var(--steel);font-size:12px">Add a proton and the chamber will name the element for you.</p>'; return; }
+  const sh=shellsFor(e.z,f.e), val=sh.length?sh[sh.length-1]:0;
+  box.innerHTML='<p class="eyebrow">Readout</p><dl class="props">'+
+    row("Element",e.name)+row("Mass number",String(f.p+f.n))+
+    row("Charge",(f.p-f.e)===0?"0":((f.p-f.e)>0?"+"+(f.p-f.e):String(f.p-f.e)))+
+    row("Shells",sh.filter(x=>x).join(" · ")||"—")+
+    row("Outer electrons",String(val))+
+    row("Neutron / proton",f.p?(f.n/f.p).toFixed(2):"—")+
+  '</dl><div class="bar" style="--c:'+st.tone+'"><i style="width:'+(100-st.level*25)+'%"></i></div>'+
+  '<div style="font-size:11px;color:var(--steel);margin-top:5px">nuclear stability, estimated from the band of stable isotopes</div>';
+}
+function drawForge(t){
+  const {ctx,w,h}=F; const f=S.forge, e=forgeEl();
+  ctx.clearRect(0,0,w,h);
+  const cx=w/2, cy=h/2;
+  const st=stability(f.p,f.n);
+  const tint=e?e.color:"#7C879F";
+
+  /* ambient chamber grain */
+  ctx.save();
+  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(w,h)*0.62);
+  g.addColorStop(0,tint+"1A"); g.addColorStop(.55,tint+"08"); g.addColorStop(1,"transparent");
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,h); ctx.restore();
+
+  const A=f.p+f.n;
+  const base=Math.min(w,h);
+  const nucR=(A?6+Math.pow(A,0.34)*5.4:0)*f.zoom;
+  const shells=shellsFor(f.p||1,f.e).filter(x=>x>0);
+  const maxR=base*0.44*f.zoom;
+  const step=shells.length?Math.min(30*f.zoom,(maxR-nucR-16)/Math.max(1,shells.length)):0;
+
+  /* shells */
+  shells.forEach((n,i)=>{
+    const r=nucR+18*f.zoom+step*i;
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,7);
+    ctx.strokeStyle=tint+"33"; ctx.lineWidth=1; ctx.stroke();
+    const dir=i%2?-1:1, sp=(0.16-i*0.014)*dir*(REDUCED?0:1);
+    for(let k=0;k<n;k++){
+      const a=t*sp+k*(Math.PI*2/n)+i*0.7;
+      const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+      ctx.beginPath(); ctx.moveTo(cx+Math.cos(a-0.3*dir)*r,cy+Math.sin(a-0.3*dir)*r);
+      ctx.arc(cx,cy,r,a-0.3*dir,a,dir<0);
+      ctx.strokeStyle="#7C9BFF55"; ctx.lineWidth=1.6; ctx.stroke();
+      ctx.beginPath(); ctx.arc(x,y,3.4,0,7);
+      ctx.fillStyle="#DCE4FF"; ctx.shadowColor="#7C9BFF"; ctx.shadowBlur=11; ctx.fill(); ctx.shadowBlur=0;
+    }
+  });
+
+  /* nucleus */
+  if(A){
+    const shake=(st.level*0.5+f.pulse*4)*(REDUCED?0:1);
+    const halo=ctx.createRadialGradient(cx,cy,nucR*0.4,cx,cy,nucR*2.4);
+    halo.addColorStop(0,st.tone+(st.level>1?"44":"26")); halo.addColorStop(1,"transparent");
+    ctx.fillStyle=halo; ctx.beginPath(); ctx.arc(cx,cy,nucR*2.4,0,7); ctx.fill();
+    const order=[];
+    for(let i=0;i<A;i++) order.push(i<f.p?1:0);
+    for(let i=0;i<A;i++){
+      const [sx,sy,ph]=nucSeed[i%nucSeed.length];
+      const wob=Math.sin(t*(1.7+ph)+ph*9)*shake;
+      const x=cx+sx*nucR*0.52+Math.cos(t*0.9+ph*7)*wob;
+      const y=cy+sy*nucR*0.52+Math.sin(t*1.1+ph*5)*wob;
+      const rr=Math.max(2.2,nucR*0.19);
+      const grd=ctx.createRadialGradient(x-rr*0.35,y-rr*0.4,rr*0.1,x,y,rr);
+      const c=order[i]?["#FF8C9E","#E03B58"]:["#B9C6E4","#69789E"];
+      grd.addColorStop(0,c[0]); grd.addColorStop(1,c[1]);
+      ctx.beginPath(); ctx.arc(x,y,rr,0,7); ctx.fillStyle=grd; ctx.fill();
+    }
+    if(f.pulse>0.01){
+      ctx.beginPath(); ctx.arc(cx,cy,nucR*(1+(1-f.pulse)*2.6),0,7);
+      ctx.strokeStyle=st.tone+Math.round(f.pulse*200).toString(16).padStart(2,"0");
+      ctx.lineWidth=2; ctx.stroke();
+    }
+  }
+  /* decay sparks for unstable nuclei */
+  if(st.level>=2&&!REDUCED&&sparks.length<40&&(t*60|0)%7===0) sparks.push({
+    x:cx,y:cy,a:(t*37)%(Math.PI*2),s:1.6+(t*13%1)*1.8,life:1});
+  sparks=sparks.filter(s=>{ s.life-=0.014; s.x+=Math.cos(s.a)*s.s; s.y+=Math.sin(s.a)*s.s;
+    if(s.life<=0) return false;
+    ctx.beginPath(); ctx.arc(s.x,s.y,1.8*s.life+0.6,0,7);
+    ctx.fillStyle=st.tone+Math.round(s.life*230).toString(16).padStart(2,"0"); ctx.fill(); return true; });
+  if(f.pulse>0) f.pulse=Math.max(0,f.pulse-0.02);
+}
+fc.addEventListener("pointerdown",ev=>{
+  const r=fc.getBoundingClientRect();
+  const dx=ev.clientX-r.left-F.w/2, dy=ev.clientY-r.top-F.h/2;
+  if(Math.hypot(dx,dy)<70){ S.forge.pulse=1;
+    for(let i=0;i<14;i++) sparks.push({x:F.w/2,y:F.h/2,a:i/14*6.283,s:2.4,life:1});
+    const e=forgeEl(); if(e) toast(el("forgeToast"),e.name+"-"+(S.forge.p+S.forge.n)+" · "+stability(S.forge.p,S.forge.n).label); }
+});
+fc.addEventListener("wheel",ev=>{ ev.preventDefault();
+  S.forge.zoom=Math.max(.45,Math.min(2.2,S.forge.zoom*(ev.deltaY>0?0.92:1.08))); },{passive:false});
+
+document.querySelectorAll("[data-part]").forEach(b=>b.addEventListener("click",()=>{
+  const k=b.dataset.part, d=+b.dataset.d;
+  if(k==="p"){ const was=S.forge.p; S.forge.p+=d; clampForge();
+    if(S.forge.p!==was&&S.forge.p>=1){ S.forge.n=ELS[S.forge.p-1].n0; S.forge.e=S.forge.p;
+      toast(el("forgeToast"),"transmuted into "+ELS[S.forge.p-1].name); S.sel=S.forge.p; }
+  } else S.forge[k]+=d;
+  syncForge();
+}));
+el("qNeutral").onclick=()=>{ S.forge.e=S.forge.p; syncForge(); toast(el("forgeToast"),"electrons balanced against protons"); };
+el("qCommon").onclick=()=>{ const e=forgeEl(); if(!e) return; S.forge.n=e.n0; syncForge();
+  toast(el("forgeToast"),"set to "+e.sym+"-"+(e.z+e.n0)+", the common isotope"); };
+el("qStrip").onclick=()=>{ S.forge.e=0; syncForge(); toast(el("forgeToast"),"bare nucleus — a fully stripped ion"); };
+el("qRandom").onclick=()=>{ const z=1+Math.floor(Math.random()*118), e=ELS[z-1];
+  S.forge.p=z; S.forge.n=e.n0+Math.floor(Math.random()*7)-3; S.forge.e=z; S.sel=z;
+  syncForge(); toast(el("forgeToast"),e.name+" — "+e.fact); };
+
+const forgeChips=el("forgeChips");
+function renderForgeChips(list){
+  forgeChips.innerHTML="";
+  list.slice(0,24).forEach(e=>{
+    const b=document.createElement("button"); b.type="button"; b.className="chip";
+    b.style.setProperty("--c",e.color);
+    b.innerHTML='<span class="s">'+e.sym+'</span><span class="t">'+e.z+'</span>';
+    b.title=e.name;
+    b.onclick=()=>{ S.forge.p=e.z;S.forge.n=e.n0;S.forge.e=e.z;S.sel=e.z;syncForge(); };
+    forgeChips.appendChild(b);
+  });
+}
+el("forgeSearch").addEventListener("input",ev=>{
+  const q=ev.target.value.trim().toLowerCase();
+  renderForgeChips(q?ELS.filter(e=>e.name.toLowerCase().includes(q)||e.sym.toLowerCase().startsWith(q)||String(e.z)===q)
+    :["H","C","N","O","Na","Cl","Fe","Cu","Au","Ag","U","He","Si","Ca","Xe","Pb"].map(s=>BY_SYM[s]));
+});
+
+/* =========================== BENCH =========================== */
+const MOLS={
+"H2O":["Water","The only common substance that floats when it freezes."],
+"H2O2":["Hydrogen peroxide","One extra oxygen turns water into a bleach."],
+"H2":["Hydrogen gas","Two atoms sharing a single pair of electrons."],
+"O2":["Oxygen gas","The double bond here is what your cells burn."],
+"O3":["Ozone","Bent, unstable, and the reason UV never reaches you."],
+"N2":["Nitrogen gas","Its triple bond is one of the strongest in chemistry."],
+"Cl2":["Chlorine gas","Yellow-green and used as a weapon in 1915."],
+"F2":["Fluorine gas","Reacts with almost everything, including glass."],
+"Br2":["Bromine","A deep red liquid that fumes in open air."],
+"I2":["Iodine","Sublimes straight from purple crystal to violet vapour."],
+"CO2":["Carbon dioxide","Linear, so despite polar bonds the molecule is not."],
+"CO":["Carbon monoxide","Binds haemoglobin 200 times tighter than oxygen."],
+"CH4":["Methane","A perfect tetrahedron, 109.5 degrees at every corner."],
+"C2H6":["Ethane","Two tetrahedra sharing a corner."],
+"C2H4":["Ethene","The gas plants release to ripen their own fruit."],
+"C2H2":["Ethyne","Burns at 3,300 degrees in a welding torch."],
+"C3H8":["Propane","Three carbons in a row — barbecue fuel."],
+"C4H10":["Butane","The liquid sloshing inside a cigarette lighter."],
+"C6H6":["Benzene","Its six electrons are smeared evenly around the ring."],
+"C6H12O6":["Glucose","The sugar every cell in your body runs on."],
+"C2H6O":["Ethanol","The alcohol in every drink ever poured."],
+"CH4O":["Methanol","One carbon short of ethanol and dangerously toxic."],
+"C2H4O2":["Acetic acid","Vinegar is about 5% of this."],
+"CH2O":["Formaldehyde","The simplest aldehyde, and a preservative."],
+"C3H6O":["Acetone","Dissolves nail polish and most plastics."],
+"NH3":["Ammonia","A lone pair sits on top of its pyramid."],
+"HCl":["Hydrogen chloride","Dissolve it in water and you have stomach acid."],
+"HF":["Hydrogen fluoride","Weak as an acid, yet it etches glass."],
+"H2S":["Hydrogen sulfide","The smell of rotten eggs, at a few parts per billion."],
+"SO2":["Sulfur dioxide","Volcanic, and the sharp edge of struck matches."],
+"SO3":["Sulfur trioxide","Flat and triangular; the step before sulfuric acid."],
+"H2SO4":["Sulfuric acid","More of it is made than any other chemical on Earth."],
+"HNO3":["Nitric acid","Dissolves most metals, and stains skin yellow."],
+"NO":["Nitric oxide","A signalling molecule your blood vessels use."],
+"NO2":["Nitrogen dioxide","The brown haze that hangs over a city."],
+"N2O":["Nitrous oxide","Laughing gas — linear, and the first anaesthetic."],
+"NaCl":["Sodium chloride","Not really a molecule: a lattice of ions."],
+"NaOH":["Sodium hydroxide","Lye — it turns fat straight into soap."],
+"NaHCO3":["Sodium bicarbonate","Baking soda, fizzing on contact with acid."],
+"KCl":["Potassium chloride","A salt substitute, and faintly radioactive."],
+"CaCO3":["Calcium carbonate","Chalk, limestone, marble and seashells."],
+"CaO":["Calcium oxide","Quicklime; it hisses when water touches it."],
+"MgO":["Magnesium oxide","The white ash left after magnesium burns."],
+"Fe2O3":["Iron(III) oxide","Rust — and the red of Mars."],
+"SiO2":["Silicon dioxide","Quartz, sand and every pane of window glass."],
+"CHCl3":["Chloroform","Sweet-smelling, and the Victorian anaesthetic."],
+"CCl4":["Carbon tetrachloride","A perfect tetrahedron of chlorine."],
+"CH3Cl":["Chloromethane","Methane with one hydrogen swapped out."],
+"C8H10N4O2":["Caffeine","Blocks the receptor that makes you feel tired."],
+"C9H8O4":["Aspirin","Willow bark, rearranged in a lab in 1897."],
+"PH3":["Phosphine","Pyramidal, flammable and deeply unpleasant."],
+"SiH4":["Silane","Methane's silicon twin — it ignites in air."],
+"BF3":["Boron trifluoride","Flat and triangular, with an empty orbital to spare."],
+"H3PO4":["Phosphoric acid","The tang in a glass of cola."],
+"HCN":["Hydrogen cyanide","Linear, almond-scented, and lethal."],
+"LiF":["Lithium fluoride","The most ionic bond of any simple compound."],
+"AlCl3":["Aluminium chloride","A workhorse catalyst in organic chemistry."],
+"TiO2":["Titanium dioxide","The white in paint, sunscreen and toothpaste."],
+"ZnO":["Zinc oxide","The paste on a lifeguard's nose."],
+"CuO":["Copper(II) oxide","The black tarnish on heated copper."],
+"KMnO4":["Potassium permanganate","An intense purple that stains everything."],
+"NH4Cl":["Ammonium chloride","Salmiak — salty Nordic liquorice."],
+"C2H5NO2":["Glycine","The smallest of the twenty amino acids."],
+"CS2":["Carbon disulfide","Linear, like CO2, but it smells foul."],
+"N2H4":["Hydrazine","Rocket fuel that ignites on contact with its oxidiser."]
+};
+const PRESETS=[
+ ["H2O","Water",[["O",0,0],["H",-34,24],["H",34,24]],[[0,1,1],[0,2,1]]],
+ ["CH4","Methane",[["C",0,0],["H",0,-44],["H",-40,24],["H",40,24],["H",0,46]],[[0,1,1],[0,2,1],[0,3,1],[0,4,1]]],
+ ["NH3","Ammonia",[["N",0,-10],["H",-38,26],["H",38,26],["H",0,44]],[[0,1,1],[0,2,1],[0,3,1]]],
+ ["CO2","Carbon dioxide",[["C",0,0],["O",-48,0],["O",48,0]],[[0,1,2],[0,2,2]]],
+ ["O2","Oxygen gas",[["O",-22,0],["O",22,0]],[[0,1,2]]],
+ ["N2","Nitrogen gas",[["N",-22,0],["N",22,0]],[[0,1,3]]],
+ ["C2H6O","Ethanol",[["C",-56,10],["C",0,-14],["O",52,12],["H",-92,-14],["H",-78,46],["H",-40,48],["H",-14,-52],["H",26,-44],["H",86,-8]],
+   [[0,1,1],[1,2,1],[0,3,1],[0,4,1],[0,5,1],[1,6,1],[1,7,1],[2,8,1]]],
+ ["C6H6","Benzene",null,null],
+ ["H2SO4","Sulfuric acid",[["S",0,0],["O",0,-52],["O",0,52],["O",-52,-14],["O",52,-14],["H",-84,16],["H",84,16]],
+   [[0,1,2],[0,2,2],[0,3,1],[0,4,1],[3,5,1],[4,6,1]]],
+ ["C6H12O6","Glucose",null,null],
+ ["O3","Ozone",[["O",0,-16],["O",-42,18],["O",42,18]],[[0,1,2],[0,2,1]]],
+ ["NaCl","Sodium chloride",[["Na",-30,0],["Cl",30,0]],[[0,1,1]]]
+];
+function ringPreset(which){
+  const A=[],B=[];
+  if(which==="C6H6"){
+    for(let i=0;i<6;i++){ const a=i/6*6.283-1.571; A.push(["C",Math.cos(a)*56,Math.sin(a)*56]); }
+    for(let i=0;i<6;i++){ const a=i/6*6.283-1.571; A.push(["H",Math.cos(a)*100,Math.sin(a)*100]); }
+    for(let i=0;i<6;i++){ B.push([i,(i+1)%6,i%2?1:2]); B.push([i,i+6,1]); }
+  } else {
+    const ring=["C","C","C","C","C","O"];
+    for(let i=0;i<6;i++){ const a=i/6*6.283-1.571; A.push([ring[i],Math.cos(a)*62,Math.sin(a)*62]); }
+    for(let i=0;i<5;i++) B.push([i,(i+1)%6,1]); B.push([5,0,1]);
+    for(let i=0;i<5;i++){ const a=i/6*6.283-1.571;
+      A.push(["O",Math.cos(a)*112,Math.sin(a)*112]); B.push([i,A.length-1,1]);
+      A.push(["H",Math.cos(a+0.28)*150,Math.sin(a+0.28)*150]); B.push([A.length-2,A.length-1,1]);
+      A.push(["H",Math.cos(a-0.3)*92,Math.sin(a-0.3)*92]); B.push([i,A.length-1,1]); }
+    A.push(["C",Math.cos(4.712)*62+4,Math.sin(4.712)*62-58]);
+  }
+  return [A,B];
+}
+
+/* ---- water splash ---- */
+const WATER={drops:[],rings:[],wash:0};
+const DROPC=["#8FD3FF","#5BB8F5","#BFE9FF","#3E9BE0","#E6F6FF"];
+let lastFormula="", seenWater=new Set();
+function splash(x,y,power){
+  power=power||1;
+  WATER.wash=1;
+  const n=REDUCED?10:Math.round(48*power);
+  for(let i=0;i<n;i++){
+    const a=-Math.PI/2+(Math.random()-0.5)*2.6;
+    const sp=(2+Math.random()*6.6)*power;
+    WATER.drops.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+      r:1.5+Math.random()*3.6,life:1,c:DROPC[(Math.random()*DROPC.length)|0],b:0});
+  }
+  for(let k=0;k<3;k++) WATER.rings.push({x,y,r:8+k*14,life:1+k*0.18});
+}
+function drawRings(ctx){
+  WATER.rings=WATER.rings.filter(r=>{
+    r.r+=2.9; r.life-=0.022; if(r.life<=0) return false;
+    ctx.save(); ctx.translate(r.x,r.y); ctx.scale(1,0.34);
+    ctx.beginPath(); ctx.arc(0,0,r.r,0,7);
+    ctx.strokeStyle="rgba(140,212,255,"+(Math.max(0,Math.min(1,r.life))*0.55).toFixed(3)+")";
+    ctx.lineWidth=2.2; ctx.stroke(); ctx.restore(); return true;
+  });
+}
+function drawDrops(ctx,w,h){
+  if(WATER.wash>0){
+    const g=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h)*0.55);
+    g.addColorStop(0,"rgba(110,190,255,"+(WATER.wash*0.16).toFixed(3)+")");
+    g.addColorStop(1,"rgba(110,190,255,0)");
+    ctx.fillStyle=g; ctx.fillRect(0,0,w,h); WATER.wash=Math.max(0,WATER.wash-0.022);
+  }
+  WATER.drops=WATER.drops.filter(d=>{
+    d.vy+=0.34; d.x+=d.vx; d.y+=d.vy; d.vx*=0.992; d.life-=0.011;
+    if(d.y>h-3&&d.vy>0&&d.b<2){ d.y=h-3; d.vy*=-0.38; d.vx*=0.7; d.b++; d.life-=0.12;
+      WATER.rings.push({x:d.x,y:h-3,r:2,life:0.5}); }
+    if(d.life<=0||d.x<-24||d.x>w+24) return false;
+    const sp=Math.hypot(d.vx,d.vy), st=Math.min(2.1,1+sp*0.09);
+    ctx.save(); ctx.translate(d.x,d.y); ctx.rotate(Math.atan2(d.vy,d.vx));
+    ctx.globalAlpha=Math.max(0,Math.min(1,d.life*1.35));
+    ctx.beginPath(); ctx.ellipse(0,0,d.r*st,d.r,0,0,7);
+    ctx.fillStyle=d.c; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-d.r*0.25,-d.r*0.3,d.r*0.34,d.r*0.26,0,0,7);
+    ctx.fillStyle="rgba(255,255,255,.75)"; ctx.fill();
+    ctx.restore(); ctx.globalAlpha=1; return true;
+  });
+}
+const bc=el("benchCanvas"), Bv=setupCanvas(bc);
+const B={atoms:[],bonds:[],drag:null,near:null,hover:null,pop:[]};
+function atomR(e){ return 9+Math.sqrt(e.radius)*1.25; }
+function addAtom(sym,x,y){
+  const e=BY_SYM[sym]; if(!e) return;
+  const a={e,x:x!=null?x:Bv.w/2+(Math.random()-.5)*160,y:y!=null?y:Bv.h/2+(Math.random()-.5)*120,
+    vx:0,vy:0,r:atomR(e),born:1};
+  B.atoms.push(a); updateReadout(); return a;
+}
+function usedValence(i){ return B.bonds.reduce((s,b)=>s+((b.a===i||b.b===i)?b.o:0),0); }
+function freeValence(i){ return Math.max(0,B.atoms[i].e.valence-usedValence(i)); }
+function loadPreset(p){
+  B.atoms=[];B.bonds=[];lastFormula="";seenWater=new Set();
+  let atoms=p[2],bonds=p[3];
+  if(!atoms){ const r=ringPreset(p[0]); atoms=r[0]; bonds=r[1]; }
+  const cx=Bv.w/2, cy=Bv.h/2;
+  atoms.forEach(([s,x,y])=>{ const a=addAtom(s,cx+x*1.15,cy+y*1.15); if(a) a.born=1; });
+  bonds.forEach(([a,b,o])=>{ if(B.atoms[a]&&B.atoms[b]) B.bonds.push({a,b,o}); });
+  updateReadout(); toast(el("benchToast"),(MOLS[p[0]]?MOLS[p[0]][0]:p[1])+" assembled");
+}
+function components(){
+  const n=B.atoms.length, seen=new Array(n).fill(false), out=[], adj={};
+  B.bonds.forEach(b=>{ (adj[b.a]=adj[b.a]||[]).push(b.b); (adj[b.b]=adj[b.b]||[]).push(b.a); });
+  for(let i=0;i<n;i++){
+    if(seen[i]) continue;
+    const q=[i], c=[]; seen[i]=true;
+    while(q.length){ const k=q.pop(); c.push(k);
+      (adj[k]||[]).forEach(j=>{ if(!seen[j]){ seen[j]=true; q.push(j); } }); }
+    out.push(c.sort((a,b)=>a-b));
+  }
+  return out;
+}
+function isWater(c){
+  if(c.length!==3) return false;
+  const cnt={}; c.forEach(i=>cnt[B.atoms[i].e.sym]=(cnt[B.atoms[i].e.sym]||0)+1);
+  return cnt.H===2 && cnt.O===1 && c.every(i=>freeValence(i)===0);
+}
+function hillFormula(){
+  const c={}; B.atoms.forEach(a=>c[a.e.sym]=(c[a.e.sym]||0)+1);
+  const keys=Object.keys(c); if(!keys.length) return "";
+  const out=[];
+  if(c.C){ out.push(["C",c.C]); if(c.H) out.push(["H",c.H]);
+    keys.filter(k=>k!=="C"&&k!=="H").sort().forEach(k=>out.push([k,c[k]])); }
+  else keys.sort().forEach(k=>out.push([k,c[k]]));
+  return out.map(([k,n])=>k+(n>1?n:"")).join("");
+}
+function updateReadout(){
+  const f=hillFormula();
+  el("bFormula").innerHTML=f?f.replace(/(\d+)/g,"<sub>$1</sub>"):"&mdash;";
+  const m=MOLS[f];
+  const nameBox=el("bName");
+  nameBox.className="mol-name"+(m?"":" unknown");
+  nameBox.textContent=f?(m?m[0]:"not a molecule I recognise — keep going"):"drop an atom to begin";
+  const mass=B.atoms.reduce((s,a)=>s+a.e.mass,0);
+  const open=B.atoms.reduce((s,a,i)=>s+freeValence(i),0);
+  const eneg=B.atoms.filter(a=>a.e.eneg).map(a=>a.e.eneg);
+  const spread=eneg.length>1?(Math.max(...eneg)-Math.min(...eneg)):0;
+  el("bProps").innerHTML=
+    row("Atoms",String(B.atoms.length))+row("Bonds",String(B.bonds.length))+
+    row("Molar mass",B.atoms.length?mass.toFixed(3)+" g/mol":"—")+
+    row("Unfilled valence",String(open))+
+    row("Bond character",spread?(spread>1.7?"ionic":spread>0.4?"polar covalent":"nonpolar"):"—");
+  el("bNote").innerHTML='<p class="eyebrow">Note</p><p class="fact" style="--c:'+
+    (m?"var(--copper)":"var(--rim-hi)")+'">'+
+    (m?m[1]:open===0&&B.atoms.length?"Every valence is satisfied. This is a legal structure — just not one in my library."
+      :"Bond atoms until no faint valence dots remain and the structure is complete.")+'</p>';
+  el("rigStat").innerHTML=f?('bench <b>'+f+'</b>'):'bench <b>clear</b>';
+  const sig=new Set();
+  components().forEach(c=>{
+    if(!isWater(c)) return;
+    const key=c.join("-"); sig.add(key);
+    if(!seenWater.has(key)&&S.mode==="bench"){
+      let cx=0,cy=0; c.forEach(i=>{cx+=B.atoms[i].x;cy+=B.atoms[i].y;});
+      splash(cx/3,cy/3,1);
+    }
+  });
+  seenWater=sig;
+  lastFormula=f;
+}
+function stepPhysics(){
+  const A=B.atoms, n=A.length;
+  const nb={}; B.bonds.forEach(b=>{ (nb[b.a]=nb[b.a]||[]).push(b.b); (nb[b.b]=nb[b.b]||[]).push(b.a); });
+  for(let i=0;i<n;i++){ const a=A[i];
+    for(let j=i+1;j<n;j++){ const b=A[j];
+      let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||0.01;
+      const bonded=B.bonds.some(t=>(t.a===i&&t.b===j)||(t.a===j&&t.b===i));
+      const shared=!bonded&&nb[i]&&nb[i].some(k=>nb[j]&&nb[j].includes(k));
+      const want=bonded?(a.r+b.r)*1.34:(shared?(a.r+b.r)*2.15:(a.r+b.r)*1.55);
+      if(bonded||d<want){
+        const f=(d-want)*(bonded?0.028:(shared?0.020:0.030));
+        const ux=dx/d*f, uy=dy/d*f;
+        a.vx+=ux;a.vy+=uy;b.vx-=ux;b.vy-=uy;
+      }
+    }
+    a.vx+=(Bv.w/2-a.x)*0.00055; a.vy+=(Bv.h/2-a.y)*0.00055;
+    a.vx*=0.86; a.vy*=0.86;
+    if(B.drag!==i){ a.x+=a.vx; a.y+=a.vy; }
+    const pad=a.r+6;
+    a.x=Math.max(pad,Math.min(Bv.w-pad,a.x)); a.y=Math.max(pad,Math.min(Bv.h-pad,a.y));
+    if(a.born>0) a.born-=0.05;
+  }
+}
+function drawBench(t){
+  const {ctx,w,h}=Bv; ctx.clearRect(0,0,w,h);
+  ctx.save(); ctx.strokeStyle="#1A2238"; ctx.lineWidth=1;
+  for(let x=(w/2)%34;x<w;x+=34){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+  for(let y=(h/2)%34;y<h;y+=34){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+  ctx.restore();
+  drawRings(ctx);
+
+  B.bonds.forEach((b,bi)=>{
+    const a=B.atoms[b.a], c=B.atoms[b.b]; if(!a||!c) return;
+    const dx=c.x-a.x, dy=c.y-a.y, d=Math.hypot(dx,dy)||1;
+    const px=-dy/d, py=dx/d;
+    const hot=B.hover===bi;
+    const offs=b.o===1?[0]:b.o===2?[-3.6,3.6]:[-5.8,0,5.8];
+    offs.forEach(o=>{
+      ctx.beginPath(); ctx.moveTo(a.x+px*o,a.y+py*o); ctx.lineTo(c.x+px*o,c.y+py*o);
+      ctx.strokeStyle=hot?"#FFB03B":"#93A2C6"; ctx.lineWidth=hot?4:3.1;
+      ctx.lineCap="round"; ctx.stroke();
+    });
+  });
+  B.atoms.forEach((a,i)=>{
+    const free=freeValence(i);
+    if(free>0){
+      for(let k=0;k<free;k++){ const ang=t*0.35+k*(6.283/Math.max(1,free))+i;
+        ctx.beginPath(); ctx.arc(a.x+Math.cos(ang)*(a.r+8),a.y+Math.sin(ang)*(a.r+8),1.9,0,7);
+        ctx.fillStyle="#7C9BFF66"; ctx.fill(); }
+    }
+    const pop=1+a.born*0.5;
+    const r=a.r*pop;
+    if(B.near===i){ ctx.beginPath(); ctx.arc(a.x,a.y,r+9,0,7);
+      ctx.strokeStyle="#49D6C0"; ctx.lineWidth=2; ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]); }
+    const g=ctx.createRadialGradient(a.x-r*0.36,a.y-r*0.42,r*0.08,a.x,a.y,r);
+    g.addColorStop(0,"#FFFFFF"); g.addColorStop(0.28,a.e.cpk); g.addColorStop(1,shade(a.e.cpk,-0.45));
+    ctx.beginPath(); ctx.arc(a.x,a.y,r,0,7); ctx.fillStyle=g;
+    ctx.shadowColor="rgba(0,0,0,.55)"; ctx.shadowBlur=12; ctx.shadowOffsetY=3; ctx.fill();
+    ctx.shadowBlur=0; ctx.shadowOffsetY=0;
+    ctx.font="600 "+Math.max(9,r*0.86)+"px "+getComputedStyle(document.body).getPropertyValue("--ff-display");
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillStyle=lum(a.e.cpk)>0.58?"#10131C":"#FFFFFF";
+    ctx.fillText(a.e.sym,a.x,a.y+0.5);
+  });
+  if(B.drag!=null&&B.near!=null){
+    const a=B.atoms[B.drag], c=B.atoms[B.near];
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(c.x,c.y);
+    ctx.strokeStyle="#49D6C0"; ctx.lineWidth=2.4; ctx.setLineDash([6,5]); ctx.stroke(); ctx.setLineDash([]);
+  }
+  drawDrops(ctx,w,h);
+}
+function hx(c){ return [parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)]; }
+function shade(c,f){ const [r,g,b]=hx(c); const m=v=>Math.max(0,Math.min(255,Math.round(v+(f<0?v*f:(255-v)*f))));
+  return "rgb("+m(r)+","+m(g)+","+m(b)+")"; }
+function lum(c){ const [r,g,b]=hx(c); return (0.299*r+0.587*g+0.114*b)/255; }
+
+function pick(x,y){ for(let i=B.atoms.length-1;i>=0;i--){ const a=B.atoms[i];
+  if(Math.hypot(a.x-x,a.y-y)<=a.r+5) return i; } return null; }
+function pickBond(x,y){
+  for(let i=0;i<B.bonds.length;i++){ const b=B.bonds[i], p=B.atoms[b.a], q=B.atoms[b.b];
+    const dx=q.x-p.x,dy=q.y-p.y,L2=dx*dx+dy*dy||1;
+    let t=((x-p.x)*dx+(y-p.y)*dy)/L2; t=Math.max(0,Math.min(1,t));
+    if(Math.hypot(p.x+dx*t-x,p.y+dy*t-y)<9) return i; } return null;
+}
+function xy(ev){ const r=bc.getBoundingClientRect(); return [ev.clientX-r.left,ev.clientY-r.top]; }
+bc.addEventListener("pointerdown",ev=>{
+  const [x,y]=xy(ev); const i=pick(x,y);
+  if(i!=null){ B.drag=i; bc.setPointerCapture(ev.pointerId); return; }
+  const bi=pickBond(x,y);
+  if(bi!=null){ const b=B.bonds[bi];
+    const roomA=freeValence(b.a), roomB=freeValence(b.b);
+    if(b.o<3&&roomA>0&&roomB>0){ b.o++; toast(el("benchToast"),["","single","double","triple"][b.o]+" bond"); }
+    else { B.bonds.splice(bi,1); toast(el("benchToast"),"bond broken"); }
+    updateReadout(); }
+});
+bc.addEventListener("pointermove",ev=>{
+  const [x,y]=xy(ev);
+  if(B.drag!=null){ const a=B.atoms[B.drag]; a.x=x; a.y=y; a.vx=a.vy=0;
+    B.near=null;
+    if(freeValence(B.drag)>0){
+      for(let j=0;j<B.atoms.length;j++){ if(j===B.drag) continue;
+        const b=B.atoms[j];
+        const already=B.bonds.some(t=>(t.a===B.drag&&t.b===j)||(t.a===j&&t.b===B.drag));
+        if(already||freeValence(j)<=0) continue;
+        if(Math.hypot(b.x-x,b.y-y)<a.r+b.r+14){ B.near=j; break; } } }
+  } else B.hover=pickBond(x,y);
+  bc.style.cursor=B.drag!=null?"grabbing":(pick(x,y)!=null?"grab":(B.hover!=null?"pointer":"default"));
+});
+function endDrag(){
+  if(B.drag!=null&&B.near!=null){
+    B.bonds.push({a:B.drag,b:B.near,o:1});
+    const f=hillFormula(); const nm=MOLS[f];
+    toast(el("benchToast"),nm?"bonded — that is "+nm[0]:"bond formed");
+    updateReadout();
+  }
+  B.drag=null; B.near=null;
+}
+bc.addEventListener("pointerup",endDrag);
+bc.addEventListener("pointercancel",endDrag);
+bc.addEventListener("dblclick",ev=>{ const [x,y]=xy(ev);
+  const i=pick(x,y);
+  if(i!=null){ B.bonds=B.bonds.filter(b=>b.a!==i&&b.b!==i)
+      .map(b=>({a:b.a>i?b.a-1:b.a,b:b.b>i?b.b-1:b.b,o:b.o}));
+    B.atoms.splice(i,1); updateReadout(); toast(el("benchToast"),"atom removed"); }
+  else if(benchPick){ addAtom(benchPick,x,y); }
+});
+let benchPick="C";
+function renderBenchChips(){
+  const box=el("benchChips"); box.innerHTML="";
+  ["H","C","N","O","P","S","F","Cl","Br","I","Na","K","Mg","Ca","Fe","Cu","Zn","Si","Al","B"].forEach(s=>{
+    const e=BY_SYM[s];
+    const b=document.createElement("button"); b.type="button"; b.className="chip";
+    b.style.setProperty("--c",e.cpk); b.setAttribute("aria-pressed",String(s===benchPick));
+    b.innerHTML='<span class="s">'+e.sym+'</span><span class="t">'+e.valence+' bond'+(e.valence===1?"":"s")+'</span>';
+    b.title=e.name+" — click to place one";
+    b.onclick=()=>{ benchPick=s; addAtom(s);
+      [...box.children].forEach((c,i2)=>c.setAttribute("aria-pressed",String(c===b)));
+      toast(el("benchToast"),e.name+" placed — drag it onto another atom"); };
+    box.appendChild(b);
+  });
+}
+el("benchSearch").addEventListener("input",ev=>{
+  const q=ev.target.value.trim().toLowerCase(), box=el("benchFound"); box.innerHTML="";
+  if(!q) return;
+  ELS.filter(e=>e.name.toLowerCase().includes(q)||e.sym.toLowerCase().startsWith(q)||String(e.z)===q)
+    .slice(0,12).forEach(e=>{
+      const b=document.createElement("button"); b.type="button"; b.className="chip";
+      b.style.setProperty("--c",e.cpk);
+      b.innerHTML='<span class="s">'+e.sym+'</span><span class="t">'+e.z+'</span>';
+      b.title=e.name; b.onclick=()=>{ benchPick=e.sym; addAtom(e.sym); toast(el("benchToast"),e.name+" placed"); };
+      box.appendChild(b); });
+});
+function renderPresets(){
+  const box=el("presets"); box.innerHTML="";
+  PRESETS.forEach(p=>{
+    const b=document.createElement("button"); b.type="button"; b.className="preset";
+    b.innerHTML='<div class="f">'+p[0].replace(/(\d+)/g,"<sub>$1</sub>")+'</div><div class="n">'+p[1]+'</div>';
+    b.onclick=()=>loadPreset(p); box.appendChild(b);
+  });
+}
+el("bShake").onclick=()=>{ B.atoms.forEach(a=>{ a.vx+=(Math.random()-.5)*22; a.vy+=(Math.random()-.5)*22; });
+  toast(el("benchToast"),"shaken"); };
+el("bRelax").onclick=()=>{ for(let k=0;k<260;k++) stepPhysics(); toast(el("benchToast"),"relaxed into shape"); };
+el("bClear").onclick=()=>{ B.atoms=[];B.bonds=[];lastFormula="";seenWater=new Set();
+  WATER.drops=[];WATER.rings=[];WATER.wash=0;updateReadout();toast(el("benchToast"),"bench cleared"); };
+
+/* =========================== WIRING =========================== */
+function setMode(m){
+  S.mode=m;
+  ["table","forge","bench"].forEach(k=>{
+    el("view-"+k).hidden=(k!==m);
+    el("tab-"+k).setAttribute("aria-selected",String(k===m));
+  });
+  if(m==="bench") updateReadout(); else if(m==="forge") syncForge();
+  else el("rigStat").innerHTML='chamber <b>'+Math.round(S.T)+' K</b>';
+}
+document.querySelectorAll(".modes button").forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+el("search").addEventListener("input",ev=>{ S.query=ev.target.value; paintTable();
+  const q=S.query.trim().toLowerCase();
+  if(q){ const hit=ELS.find(e=>e.sym.toLowerCase()===q||String(e.z)===q||e.name.toLowerCase()===q)
+      ||ELS.find(e=>e.name.toLowerCase().startsWith(q));
+    if(hit) select(hit.z,false); } });
+el("colorBy").addEventListener("click",ev=>{
+  const b=ev.target.closest("[data-by]"); if(!b) return;
+  S.by=b.dataset.by;
+  [...el("colorBy").children].forEach(c=>c.setAttribute("aria-pressed",String(c===b)));
+  paintTable();
+});
+el("temp").addEventListener("input",ev=>{
+  S.T=+ev.target.value;
+  el("tempK").textContent=Math.round(S.T)+" K";
+  el("tempC").textContent=Math.round(S.T-273.15)+" °C";
+  paintTable(); renderInspector(ELS[S.sel-1]);
+  if(S.mode==="table") el("rigStat").innerHTML='chamber <b>'+Math.round(S.T)+' K</b>';
+});
+addEventListener("keydown",ev=>{
+  if(/^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) return;
+  if(ev.key==="1") return setMode("table");
+  if(ev.key==="2") return setMode("forge");
+  if(ev.key==="3") return setMode("bench");
+  if(S.mode==="forge"){
+    const f=S.forge;
+    if(ev.key==="ArrowRight"||ev.key==="ArrowLeft"){ ev.preventDefault();
+      f.p=Math.max(1,Math.min(118,f.p+(ev.key==="ArrowRight"?1:-1)));
+      f.n=ELS[f.p-1].n0; f.e=f.p; S.sel=f.p; syncForge(); }
+    if(ev.key==="ArrowUp"||ev.key==="ArrowDown"){ ev.preventDefault();
+      f.n=Math.max(0,f.n+(ev.key==="ArrowUp"?1:-1)); syncForge(); }
+  }
+  if(S.mode==="table"&&/^Arrow/.test(ev.key)){
+    ev.preventDefault();
+    const d={ArrowRight:1,ArrowLeft:-1,ArrowUp:-18,ArrowDown:18}[ev.key];
+    let z=S.sel+(Math.abs(d)===1?d:0);
+    if(Math.abs(d)>1){ const cur=ELS[S.sel-1];
+      const want=cur.row+(d>0?1:-1);
+      const hit=ELS.find(e=>e.row===want&&e.col===cur.col);
+      z=hit?hit.z:S.sel; }
+    select(Math.max(1,Math.min(118,z)),false);
+    tiles[S.sel].scrollIntoView({block:"nearest",inline:"nearest"});
+  }
+});
+
+/* =========================== BOOT =========================== */
+buildTable();
+renderForgeChips(["H","C","N","O","Na","Cl","Fe","Cu","Au","Ag","U","He","Si","Ca","Xe","Pb"].map(s=>BY_SYM[s]));
+renderBenchChips();
+renderPresets();
+select(6,false);
+syncForge();
+requestAnimationFrame(()=>{ loadPreset(PRESETS[0]); for(let k=0;k<200;k++) stepPhysics();
+  if(S.mode==="table") el("rigStat").innerHTML="chamber <b>"+Math.round(S.T)+" K</b>"; });
+setMode("table");
+
+let t0=null;
+function frame(ts){
+  if(t0==null) t0=ts;
+  const t=(ts-t0)/1000;
+  if(S.mode==="forge") drawForge(t);
+  else if(S.mode==="bench"){ stepPhysics(); drawBench(t); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+
+<a href="index.html" style="position:fixed;left:12px;bottom:12px;z-index:999;background:#12151B;color:#E8EAF0;border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:9px 16px;font:600 13px system-ui,sans-serif;text-decoration:none;box-shadow:0 6px 20px rgba(0,0,0,.4)">← Matter Lab</a>
+</body>
+</html>

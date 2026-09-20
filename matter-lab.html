@@ -1,0 +1,729 @@
+<title>Matter Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Roboto+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#FFFFFF; --surf:#FFFFFF; --s1:#F5F7FB; --s2:#ECEFF6; --s2h:#E4E8F2;
+  --line:#DFE3ED; --line-soft:#EBEEF5;
+  --on:#161A22; --on2:#575D6C; --on3:#8B91A1;
+  --pri:#3B5BFF; --on-pri:#FFFFFF; --pri-soft:#EAEEFF;
+  --stage:#0A0C12; --stage2:#11141C; --stage-on:#EDEFF6; --stage-on2:#9AA1B4;
+  --amber:#F59E0B; --emerald:#10B981; --violet:#A855F7; --red:#EF4444;
+  --e1:0 1px 2px rgba(16,20,32,.07),0 1px 3px rgba(16,20,32,.05);
+  --e2:0 2px 6px rgba(16,20,32,.07),0 6px 16px rgba(16,20,32,.07);
+  --e3:0 8px 20px rgba(16,20,32,.10),0 24px 56px rgba(16,20,32,.13);
+  --ff:"DM Sans",system-ui,-apple-system,sans-serif;
+  --ff-m:"Roboto Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C0E13; --surf:#12151B; --s1:#171B23; --s2:#1F242E; --s2h:#262C38;
+    --line:#2A303C; --line-soft:#21262F;
+    --on:#E8EAF0; --on2:#A3A9B8; --on3:#6F7584;
+    --pri:#93A6FF; --on-pri:#0C0E13; --pri-soft:#1A2036;
+    --e1:0 1px 2px rgba(0,0,0,.5); --e2:0 2px 8px rgba(0,0,0,.5); --e3:0 12px 36px rgba(0,0,0,.65);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C0E13; --surf:#12151B; --s1:#171B23; --s2:#1F242E; --s2h:#262C38;
+  --line:#2A303C; --line-soft:#21262F;
+  --on:#E8EAF0; --on2:#A3A9B8; --on3:#6F7584;
+  --pri:#93A6FF; --on-pri:#0C0E13; --pri-soft:#1A2036;
+  --e1:0 1px 2px rgba(0,0,0,.5); --e2:0 2px 8px rgba(0,0,0,.5); --e3:0 12px 36px rgba(0,0,0,.65);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--on);font-family:var(--ff);
+  font-size:16px;line-height:1.6;letter-spacing:-.004em;-webkit-font-smoothing:antialiased;
+}
+button{background:none;border:0;cursor:pointer;padding:0;font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--pri);outline-offset:3px;border-radius:8px}
+img{max-width:100%}
+.wrap{width:100%;max-width:1140px;margin:0 auto;padding-inline:20px}
+
+/* ---------- nav ---------- */
+.nav{
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--surf);
+  border-bottom:1px solid var(--line-soft);
+}
+.nav .in{display:flex;align-items:center;gap:14px;padding-block:11px}
+.mark{
+  width:32px;height:32px;border-radius:11px;position:relative;flex:0 0 auto;overflow:hidden;
+  background:conic-gradient(from 200deg,#3B5BFF,#A855F7,#EF4444,#F59E0B,#10B981,#3B5BFF);
+}
+.mark::after{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--surf)}
+.mark::before{content:"";position:absolute;inset:11px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,#fff,#3B5BFF 62%,#18246E);
+  animation:beat 3.6s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(.7)}}
+.nav .nm{font-weight:700;font-size:17px;letter-spacing:-.025em}
+.nav .grow{flex:1}
+.nav a.lnk{color:var(--on2);text-decoration:none;font-size:14px;font-weight:500;padding:7px 11px;border-radius:999px}
+.nav a.lnk:hover{background:var(--s2);color:var(--on)}
+@media (max-width:720px){.nav a.lnk.hide{display:none}}
+
+/* ---------- buttons ---------- */
+.b{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  border-radius:999px;padding:13px 24px;font-size:15px;font-weight:600;
+  text-decoration:none;transition:.15s;letter-spacing:-.01em;white-space:nowrap;
+}
+.b.pri{background:var(--pri);color:var(--on-pri);box-shadow:var(--e1)}
+.b.pri:hover{box-shadow:var(--e2);filter:brightness(1.06)}
+.b.sec{border:1px solid var(--line);color:var(--on);background:var(--surf)}
+.b.sec:hover{background:var(--s1);box-shadow:var(--e1)}
+.b.sm{padding:9px 17px;font-size:14px}
+
+/* ---------- hero ---------- */
+.hero{padding-block:clamp(44px,7vw,84px) clamp(28px,4vw,44px);text-align:center}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;background:var(--pri-soft);color:var(--pri);
+  border-radius:999px;padding:6px 15px;font-size:13px;font-weight:600;margin-bottom:22px;
+}
+.eyebrow i{width:6px;height:6px;border-radius:50%;background:currentColor;display:block}
+h1{
+  font-size:clamp(34px,6.4vw,66px);line-height:1.04;letter-spacing:-.04em;font-weight:700;
+  margin:0 0 20px;text-wrap:balance;
+}
+h1 .g{
+  background:linear-gradient(96deg,#3B5BFF,#A855F7 42%,#EF4444 72%,#F59E0B);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.sub{font-size:clamp(16px,2vw,20px);color:var(--on2);max-width:620px;margin:0 auto 30px;text-wrap:balance}
+.cta{display:flex;gap:11px;justify-content:center;flex-wrap:wrap}
+
+/* ---------- demo ---------- */
+.demo{
+  position:relative;border-radius:clamp(18px,2.4vw,30px);overflow:hidden;background:var(--stage);
+  border:1px solid rgba(255,255,255,.09);box-shadow:var(--e3);
+}
+.demo-canvas{display:block;width:100%;aspect-ratio:16/9;touch-action:none}
+.demo-cap{
+  position:absolute;left:0;right:0;bottom:0;padding:22px clamp(16px,3vw,30px) 18px;
+  background:linear-gradient(180deg,transparent,rgba(6,8,13,.86) 42%);
+  color:var(--stage-on);pointer-events:none;
+}
+.demo-cap .st{font-family:var(--ff-m);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#6EE7B7;margin-bottom:5px}
+.demo-cap .ti{font-size:clamp(17px,2.5vw,27px);font-weight:700;letter-spacing:-.025em;line-height:1.16;text-wrap:balance}
+.demo-cap .de{font-size:clamp(12.5px,1.5vw,15px);color:var(--stage-on2);margin-top:5px;max-width:620px;text-wrap:balance}
+.demo-bar{
+  position:absolute;top:14px;left:clamp(14px,2.4vw,22px);right:clamp(14px,2.4vw,22px);
+  display:flex;align-items:center;gap:9px;
+}
+.dots{display:flex;gap:5px;flex:1}
+.dots i{height:3px;flex:1;border-radius:3px;background:rgba(255,255,255,.18);overflow:hidden;position:relative}
+.dots i b{position:absolute;inset:0;width:0;background:#fff;border-radius:3px;display:block}
+.dots i.done b{width:100%}
+.pp{
+  width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;
+  display:grid;place-items:center;backdrop-filter:blur(8px);flex:0 0 auto;transition:.15s;
+}
+.pp:hover{background:rgba(255,255,255,.26)}
+
+/* ---------- sections ---------- */
+section{padding-block:clamp(44px,7vw,82px)}
+.sec-head{max-width:640px;margin-bottom:34px}
+h2{font-size:clamp(25px,3.8vw,40px);line-height:1.12;letter-spacing:-.033em;font-weight:700;margin:0 0 13px;text-wrap:balance}
+.lead{font-size:clamp(15px,1.8vw,18px);color:var(--on2);margin:0;text-wrap:balance}
+
+.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:18px}
+.tool{
+  border:1px solid var(--line);border-radius:22px;overflow:hidden;background:var(--surf);
+  display:flex;flex-direction:column;transition:.18s;text-decoration:none;color:inherit;
+}
+.tool:hover{box-shadow:var(--e3);transform:translateY(-3px)}
+.tool .top{height:168px;position:relative;overflow:hidden;background:var(--stage)}
+.tool .top canvas{width:100%;height:100%;display:block}
+.tool .bd{padding:20px 22px 22px}
+.tool .tg{
+  display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent);
+  border-radius:999px;padding:4px 11px;margin-bottom:11px;
+}
+.tool h3{font-size:22px;font-weight:700;letter-spacing:-.025em;margin:0 0 8px;line-height:1.2}
+.tool p{margin:0 0 15px;color:var(--on2);font-size:14.5px}
+.tool ul{margin:0 0 17px;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.tool li{font-size:13.5px;color:var(--on2);display:flex;gap:9px;align-items:flex-start}
+.tool li svg{flex:0 0 auto;margin-top:3px;color:var(--c)}
+.tool .go{display:inline-flex;align-items:center;gap:7px;color:var(--pri);font-weight:600;font-size:14.5px}
+
+/* ---------- ladder ---------- */
+.ladder{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px}
+.rung{border:1px solid var(--line);border-radius:16px;padding:17px;background:var(--surf);position:relative;overflow:hidden}
+.rung::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--c)}
+.rung .sz{font-family:var(--ff-m);font-size:11px;color:var(--c);font-weight:700;letter-spacing:.02em}
+.rung .nm{font-size:16px;font-weight:700;margin:5px 0 5px;letter-spacing:-.02em}
+.rung .de{font-size:13px;color:var(--on2);line-height:1.5}
+
+/* ---------- sources ---------- */
+.srcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(252px,1fr));gap:11px}
+.src{
+  border:1px solid var(--line);border-radius:14px;padding:15px 17px;background:var(--surf);
+  text-decoration:none;display:block;transition:.15s;
+}
+.src:hover{box-shadow:var(--e2);border-color:var(--line)}
+.src .t{font-weight:700;font-size:14.5px;color:var(--pri);margin-bottom:4px;letter-spacing:-.015em}
+.src .d{font-size:12.5px;color:var(--on2);line-height:1.5}
+.note{
+  border-radius:16px;padding:17px 19px;background:var(--s1);border:1px solid var(--line-soft);
+  font-size:14px;color:var(--on2);line-height:1.6;margin-top:20px;
+}
+.note b{color:var(--on)}
+
+footer{border-top:1px solid var(--line-soft);padding-block:30px;color:var(--on3);font-size:13.5px}
+footer .in{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+@media (max-width:760px){
+  .demo-canvas{aspect-ratio:4/3}
+  .demo-cap{position:static;background:var(--stage2);padding:15px 17px 17px;
+    border-top:1px solid rgba(255,255,255,.07)}
+  .demo-cap .de{max-width:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.08s!important}}
+</style>
+
+<nav class="nav"><div class="wrap in">
+  <div class="mark" aria-hidden="true"></div>
+  <span class="nm">Matter Lab</span>
+  <span class="grow"></span>
+  <a class="lnk hide" href="#demo">Demo</a>
+  <a class="lnk hide" href="#tools">Tools</a>
+  <a class="lnk hide" href="#sources">Sources</a>
+  <a class="b pri sm" href="#tools">Open a tool</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow"><i></i>Chemistry you can point at</div>
+  <h1>Everything around you is<br><span class="g">made of the same hundred pieces</span></h1>
+  <p class="sub">Two tools that take a real object apart — down past the molecules, past the atoms,
+    all the way to the quarks — and then let you put it back together differently.</p>
+  <div class="cta">
+    <a class="b pri" href="#tools">Start exploring</a>
+    <a class="b sec" href="#demo">Watch the 45-second tour</a>
+  </div>
+</div></header>
+
+<div class="wrap" id="demo">
+  <div class="demo">
+    <canvas class="demo-canvas" id="dc"></canvas>
+    <div class="demo-bar">
+      <button class="pp" id="pp" aria-label="Pause the tour">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" id="ppIcon"><rect x="6" y="5" width="4" height="14" rx="1.3"/><rect x="14" y="5" width="4" height="14" rx="1.3"/></svg>
+      </button>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="demo-cap">
+      <div class="st" id="capStep"></div>
+      <div class="ti" id="capTitle"></div>
+      <div class="de" id="capDesc"></div>
+    </div>
+  </div>
+</div>
+
+<section id="tools"><div class="wrap">
+  <div class="sec-head">
+    <h2>Two tools, one idea</h2>
+    <p class="lead">One starts from the real world and goes inward. The other starts from nothing
+      and lets you build outward.</p>
+  </div>
+  <div class="tools" id="toolCards"></div>
+</div></section>
+
+<section style="background:var(--s1)"><div class="wrap">
+  <div class="sec-head">
+    <h2>Six steps from your hand to a quark</h2>
+    <p class="lead">Every screen is a real rung on the same ladder, and the size is always on the label.
+      Nothing is a cartoon of the level above it.</p>
+  </div>
+  <div class="ladder" id="ladder"></div>
+</div></section>
+
+<section id="sources"><div class="wrap">
+  <div class="sec-head">
+    <h2>Where the numbers come from</h2>
+    <p class="lead">Masses, radii, electronegativities, melting points, bond orders and particle
+      data are standard reference values. Check any of them.</p>
+  </div>
+  <div class="srcs" id="srcs"></div>
+  <div class="note" id="honesty"></div>
+</div></section>
+
+<footer><div class="wrap in">
+  <span>Matter Lab</span><span>&middot;</span>
+  <span>Built as a demo. Not a substitute for a lab, a textbook or a teacher.</span>
+</div></footer>
+
+<script>
+"use strict";
+const $=i=>document.getElementById(i);
+const REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const CPK={H:"#F4F6FF",C:"#4A5060",O:"#FF4B45",N:"#4F7DFF",Na:"#AB5CF2",Cl:"#3FD46B"};
+const hx=c=>[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)];
+const shade=(c,f)=>{const[r,g,b]=hx(c);const m=v=>Math.max(0,Math.min(255,Math.round(v+(f<0?v*f:(255-v)*f))));
+  return "rgb("+m(r)+","+m(g)+","+m(b)+")";};
+const lum=c=>{const[r,g,b]=hx(c);return(.299*r+.587*g+.114*b)/255;};
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+function mkCanvas(cv){
+  const c=cv.getContext("2d");const st={c,w:0,h:0};
+  const fit=()=>{const r=cv.getBoundingClientRect();const d=Math.min(2,devicePixelRatio||1);
+    st.w=Math.max(1,r.width);st.h=Math.max(1,r.height);
+    cv.width=Math.round(st.w*d);cv.height=Math.round(st.h*d);c.setTransform(d,0,0,d,0,0);};
+  new ResizeObserver(fit).observe(cv);fit();return st;
+}
+function ball(c,x,y,r,col,label){
+  const g=c.createRadialGradient(x-r*.36,y-r*.42,r*.06,x,y,r);
+  g.addColorStop(0,"#fff");g.addColorStop(.26,col);g.addColorStop(1,shade(col,-.5));
+  c.beginPath();c.arc(x,y,r,0,7);c.fillStyle=g;
+  c.shadowColor="rgba(0,0,0,.55)";c.shadowBlur=r*.7;c.shadowOffsetY=r*.15;c.fill();
+  c.shadowBlur=0;c.shadowOffsetY=0;
+  if(label&&r>9){c.font='700 '+Math.max(9,r*.8)+'px "DM Sans",system-ui,sans-serif';
+    c.textAlign="center";c.textBaseline="middle";
+    c.fillStyle=lum(col)>.58?"#0B0B12":"#fff";c.fillText(label,x,y);}
+}
+function ringAt(c,x,y,r,col,w,dash){
+  c.beginPath();c.arc(x,y,r,0,7);c.strokeStyle=col;c.lineWidth=w||1;
+  if(dash)c.setLineDash(dash);c.stroke();c.setLineDash([]);
+}
+function bgGlow(c,w,h,tint){
+  c.clearRect(0,0,w,h);
+  c.fillStyle="#0A0C12";c.fillRect(0,0,w,h);
+  const g=c.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h)*.62);
+  g.addColorStop(0,tint+"26");g.addColorStop(.6,tint+"0C");g.addColorStop(1,"rgba(0,0,0,0)");
+  c.fillStyle=g;c.fillRect(0,0,w,h);
+  c.strokeStyle="rgba(255,255,255,.032)";c.lineWidth=1;
+  const s=Math.max(34,w/26);
+  for(let x=(w/2)%s;x<w;x+=s){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke();}
+  for(let y=(h/2)%s;y<h;y+=s){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();}
+}
+/* ---------- scene 1: point at something ---------- */
+function drawLemon(c,cx,cy,R){
+  c.save();c.translate(cx,cy);
+  const g=c.createRadialGradient(-R*.3,-R*.34,R*.1,0,0,R*1.15);
+  g.addColorStop(0,"#FFE68A");g.addColorStop(.55,"#F7C33A");g.addColorStop(1,"#C98A12");
+  c.beginPath();c.ellipse(0,0,R*1.12,R*.92,0,0,7);c.fillStyle=g;c.fill();
+  c.strokeStyle="rgba(120,80,10,.35)";c.lineWidth=1.4;
+  for(let i=0;i<8;i++){const a=i/8*Math.PI*2;
+    c.beginPath();c.moveTo(0,0);c.lineTo(Math.cos(a)*R*1.06,Math.sin(a)*R*.87);c.stroke();}
+  c.beginPath();c.ellipse(0,0,R*.20,R*.16,0,0,7);c.fillStyle="rgba(255,244,200,.85)";c.fill();
+  c.restore();
+}
+const SCENES=[
+{ms:7000,step:"Step 1",title:"Point it at something real",
+ desc:"A lemon, a coin, a leaf. Box one part of the photo and only that part gets read.",
+ draw(c,w,h,t){
+  bgGlow(c,w,h,"#F59E0B");
+  const fw=Math.min(w*.62,h*1.0), fh=fw*.66, fx=(w-fw)/2, fy=(h-fh)/2-h*.03;
+  c.save();c.beginPath();c.roundRect(fx,fy,fw,fh,16);c.clip();
+  c.fillStyle="#141821";c.fillRect(fx,fy,fw,fh);
+  drawLemon(c,fx+fw*.5,fy+fh*.52,fh*.30);
+  c.restore();
+  ringAt;c.beginPath();c.roundRect(fx,fy,fw,fh,16);
+  c.strokeStyle="rgba(255,255,255,.22)";c.lineWidth=1.5;c.stroke();
+  const cr=Math.min(26,fw*.07);
+  c.strokeStyle="rgba(255,255,255,.92)";c.lineWidth=3;c.lineCap="round";
+  [[fx+12,fy+12,1,1],[fx+fw-12,fy+12,-1,1],[fx+12,fy+fh-12,1,-1],[fx+fw-12,fy+fh-12,-1,-1]]
+   .forEach(([x,y,sx,sy])=>{c.beginPath();c.moveTo(x,y+sy*cr);c.lineTo(x,y);c.lineTo(x+sx*cr,y);c.stroke();});
+  if(t<.42){const sy=fy+fh*(.08+.84*((t/.42)%1));
+    const g2=c.createLinearGradient(fx,0,fx+fw,0);
+    g2.addColorStop(0,"rgba(110,231,183,0)");g2.addColorStop(.5,"rgba(110,231,183,.95)");
+    g2.addColorStop(1,"rgba(110,231,183,0)");
+    c.fillStyle=g2;c.fillRect(fx,sy,fw,2);}
+  if(t>.42){
+    const u=clamp((t-.42)/.20,0,1),e=ease(u);
+    const bw=fw*.34*e, bh=fh*.44*e;
+    const bx=fx+fw*.5-bw/2, by=fy+fh*.52-bh/2;
+    c.save();c.beginPath();c.rect(0,0,w,h);
+    c.beginPath();c.roundRect(bx,by,bw,bh,8);
+    c.strokeStyle="#6EE7B7";c.lineWidth=2.5;c.stroke();
+    if(u>=1&&t<.82){c.fillStyle="rgba(110,231,183,"+(0.10+Math.sin(t*26)*0.05).toFixed(3)+")";c.fill();}
+    c.restore();
+    if(t>.66){
+      c.font='600 13px "DM Sans",system-ui,sans-serif';c.textAlign="center";
+      c.fillStyle="#6EE7B7";c.fillText("reading this part",fx+fw*.5,by+bh+22);
+    }
+  }
+ }},
+{ms:6000,step:"Step 2",title:"Find out what it is made of",
+ desc:"Mostly water. A few percent citric acid — that is the entire sour taste.",
+ draw(c,w,h,t){
+  bgGlow(c,w,h,"#10B981");
+  const parts=[["Water","H₂O",88,"#3B5BFF"],["Citric acid","C₆H₈O₇",6,"#10B981"],
+               ["Sugar","C₆H₁₂O₆",6,"#A855F7"]];
+  const base=Math.min(w,h);
+  parts.forEach((p,i)=>{
+    const u=clamp((t-i*.12)/.34,0,1),e=ease(u);
+    if(u<=0)return;
+    const a=i/parts.length*Math.PI*2-Math.PI/2+t*.24;
+    const orb=base*.27;
+    const x=w/2+Math.cos(a)*orb*(parts.length>1?1:0);
+    const y=h/2+Math.sin(a)*orb*.7*(parts.length>1?1:0);
+    const R=(base*.085+Math.sqrt(p[2]/100)*base*.13)*e;
+    const g=c.createRadialGradient(x-R*.3,y-R*.35,R*.1,x,y,R);
+    g.addColorStop(0,p[3]+"66");g.addColorStop(.7,p[3]+"22");g.addColorStop(1,p[3]+"08");
+    c.beginPath();c.arc(x,y,R,0,7);c.fillStyle=g;c.fill();
+    ringAt(c,x,y,R,p[3]+"AA",1.4);
+    c.beginPath();c.arc(x,y,R,-Math.PI/2,-Math.PI/2+Math.PI*2*(p[2]/100)*e);
+    c.strokeStyle=p[3];c.lineWidth=3.6;c.lineCap="round";c.stroke();
+    c.textAlign="center";c.textBaseline="middle";
+    c.font='700 '+Math.max(12,R*.26)+'px "DM Sans",system-ui,sans-serif';
+    c.fillStyle="#EDEFF6";c.fillText(p[0],x,y-R*.13);
+    c.font='500 '+Math.max(10,R*.20)+'px "Roboto Mono",monospace';
+    c.fillStyle=p[3];c.fillText(p[1],x,y+R*.14);
+    c.font='500 '+Math.max(9,R*.17)+'px "Roboto Mono",monospace';
+    c.fillStyle="rgba(255,255,255,.55)";c.fillText(p[2]+"%",x,y+R*.40);
+  });
+ }},
+{ms:7000,step:"Step 3",title:"Go inside one molecule",
+ desc:"Three atoms, bent at 104.5 degrees. Almost everything water does follows from that bend.",
+ draw(c,w,h,t){
+  bgGlow(c,w,h,"#3B5BFF");
+  const base=Math.min(w,h),k=base/300;
+  const cx=w/2,cy=h/2;
+  const e=ease(clamp(t/.4,0,1));
+  const spread=1-(1-e)*.6;
+  const R=52*k*spread;
+  const pts=[[cx,cy-14*k],[cx-Math.cos(.38)*R*1.6,cy+Math.sin(.9)*R*1.1],
+             [cx+Math.cos(.38)*R*1.6,cy+Math.sin(.9)*R*1.1]];
+  const wob=REDUCED?0:Math.sin(t*7)*2*k;
+  c.lineCap="round";
+  for(let i=1;i<3;i++){
+    c.beginPath();c.moveTo(pts[0][0],pts[0][1]);c.lineTo(pts[i][0]+wob,pts[i][1]);
+    c.strokeStyle="rgba(200,208,232,"+(e*.9).toFixed(2)+")";c.lineWidth=5*k;c.stroke();
+  }
+  ball(c,pts[0][0],pts[0][1],25*k,CPK.O,"O");
+  ball(c,pts[1][0]+wob,pts[1][1],16*k,CPK.H,"H");
+  ball(c,pts[2][0]+wob,pts[2][1],16*k,CPK.H,"H");
+  if(t>.5){
+    const u=clamp((t-.5)/.3,0,1);
+    c.globalAlpha=u;
+    c.strokeStyle="#6EE7B7";c.lineWidth=1.6;c.setLineDash([4,4]);
+    c.beginPath();c.arc(pts[0][0],pts[0][1],44*k,Math.PI*.30,Math.PI*.70);c.stroke();
+    c.setLineDash([]);
+    c.font='600 '+(13*Math.max(1,k*.9))+'px "Roboto Mono",monospace';c.textAlign="center";
+    c.fillStyle="#6EE7B7";c.fillText("104.5°",pts[0][0],pts[0][1]+62*k);
+    c.globalAlpha=1;
+  }
+ }},
+{ms:8000,step:"Step 4",title:"Open a single atom",
+ desc:"Shells you can count, electrons you can click. Each one opens to show what it is made of — nothing.",
+ draw(c,w,h,t){
+  bgGlow(c,w,h,"#A855F7");
+  const cx=w/2,cy=h/2,base=Math.min(w,h);
+  const shells=[2,6];
+  const nucR=base*.072;
+  const e=ease(clamp(t/.35,0,1));
+  const inner=nucR+base*.10,outer=base*.35;
+  shells.forEach((n,si)=>{
+    const r=(si===0?inner:outer)*e;
+    ringAt(c,cx,cy,r,"rgba(255,255,255,.10)",1);
+    ringAt(c,cx,cy,r,"rgba(147,166,255,.20)",1,[2,7]);
+    c.font='600 11px "Roboto Mono",monospace';c.textAlign="right";
+    c.fillStyle="rgba(255,255,255,.44)";
+    c.fillText((si?"L":"K")+"  "+n,cx-r-9,cy+4);
+    const dir=si%2?-1:1,sp=(.5-si*.12)*dir*(REDUCED?0:1);
+    for(let i=0;i<n;i++){
+      const a=t*sp*6+i*(Math.PI*2/n)+si*.8;
+      const x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;
+      const focus=si===1&&i===0&&t>.55;
+      c.beginPath();c.arc(cx,cy,r,a-.3*dir,a,dir<0);
+      c.strokeStyle="rgba(147,166,255,.45)";c.lineWidth=2;c.stroke();
+      const rr=focus?8:5;
+      c.beginPath();c.arc(x,y,rr+5,0,7);
+      c.fillStyle=focus?"rgba(147,166,255,.4)":"rgba(147,166,255,.16)";c.fill();
+      c.beginPath();c.arc(x,y,rr,0,7);c.fillStyle="#fff";
+      c.shadowColor="#93A6FF";c.shadowBlur=focus?22:12;c.fill();c.shadowBlur=0;
+      if(focus){
+        ringAt(c,x,y,rr+10,"#fff",1.4,[4,4]);
+        c.font='700 11px "Roboto Mono",monospace';c.textAlign="center";
+        c.fillStyle="#fff";c.fillText("2p ↑",x,y-rr-16);
+        if(t>.72){
+          const u=clamp((t-.72)/.2,0,1);c.globalAlpha=u;
+          const bw=168,bh=52,bx=Math.min(w-bw-14,Math.max(14,x-bw/2)),by=Math.min(h-bh-14,y+22);
+          c.beginPath();c.roundRect(bx,by,bw,bh,10);
+          c.fillStyle="rgba(18,21,27,.95)";c.fill();
+          c.strokeStyle="rgba(255,255,255,.16)";c.lineWidth=1;c.stroke();
+          c.textAlign="left";
+          c.font='700 12px "DM Sans",system-ui,sans-serif';c.fillStyle="#EDEFF6";
+          c.fillText("Electron · elementary",bx+12,by+20);
+          c.font='500 11px "Roboto Mono",monospace';c.fillStyle="#9AA1B4";
+          c.fillText("−1 e · 0.511 MeV · no parts",bx+12,by+38);
+          c.globalAlpha=1;
+        }
+      }
+    }
+  });
+  const hg=c.createRadialGradient(cx,cy,nucR*.3,cx,cy,nucR*2.6);
+  hg.addColorStop(0,"rgba(239,68,68,.34)");hg.addColorStop(1,"rgba(239,68,68,0)");
+  c.fillStyle=hg;c.beginPath();c.arc(cx,cy,nucR*2.6,0,7);c.fill();
+  const ng=c.createRadialGradient(cx-nucR*.34,cy-nucR*.4,nucR*.08,cx,cy,nucR);
+  ng.addColorStop(0,"#FFD9DD");ng.addColorStop(.32,"#FF6E7C");ng.addColorStop(1,"#8E2033");
+  c.beginPath();c.arc(cx,cy,nucR,0,7);c.fillStyle=ng;c.fill();
+  c.font='700 '+Math.max(11,nucR*.55)+'px "Roboto Mono",monospace';
+  c.textAlign="center";c.textBaseline="middle";c.fillStyle="#fff";c.fillText("16",cx,cy);
+ }},
+{ms:8000,step:"Step 5",title:"Keep going until physics runs out",
+ desc:"Protons open into three quarks, bound by gluons. Their charges add to exactly +1.",
+ draw(c,w,h,t){
+  bgGlow(c,w,h,"#EF4444");
+  const cx=w/2,cy=h/2,base=Math.min(w,h);
+  if(t<.42){
+    const A=16,spread=base*.20,rr=base*.048;
+    for(let i=0;i<A;i++){
+      const a=i*2.399963,r=Math.sqrt(i)*.62;
+      const x=cx+Math.cos(a)*r*spread,y=cy+Math.sin(a)*r*spread;
+      const sel=i===0&&t>.24;
+      if(sel)ringAt(c,x,y,rr+6,"#fff",1.6,[4,4]);
+      ball(c,x,y,rr,i<8?"#FF6E7C":"#9AA6C8",rr>11?(i<8?"p":"n"):"");
+    }
+    c.font='600 12px "Roboto Mono",monospace';c.textAlign="center";
+    c.fillStyle="rgba(255,255,255,.4)";
+    c.fillText("8 protons · 8 neutrons",cx,cy+base*.36);
+  } else {
+    const u=ease(clamp((t-.42)/.22,0,1));
+    const R0=base*.17*u,qr=base*.065*u;
+    const cols=["#EF4444","#10B981","#3B5BFF"];
+    const flav=[["u","+2/3","#F59E0B"],["u","+2/3","#F59E0B"],["d","−1/3","#3B5BFF"]];
+    const bagR=R0+qr*1.9;
+    const bg2=c.createRadialGradient(cx,cy,bagR*.3,cx,cy,bagR);
+    bg2.addColorStop(0,"rgba(245,158,11,.05)");bg2.addColorStop(.82,"rgba(245,158,11,.12)");
+    bg2.addColorStop(1,"rgba(245,158,11,0)");
+    c.fillStyle=bg2;c.beginPath();c.arc(cx,cy,bagR,0,7);c.fill();
+    ringAt(c,cx,cy,bagR,"rgba(245,158,11,.32)",1.4,[7,7]);
+    const P=flav.map((f,i)=>{const a=i/3*Math.PI*2-Math.PI/2+(REDUCED?0:t*2.2);
+      const wb=REDUCED?0:Math.sin(t*14+i*2.1)*6;
+      return[cx+Math.cos(a)*(R0+wb),cy+Math.sin(a)*(R0+wb)];});
+    for(let i=0;i<3;i++){
+      const j=(i+1)%3,[ax,ay]=P[i],[bx,by]=P[j];
+      const g2=c.createLinearGradient(ax,ay,bx,by);
+      g2.addColorStop(0,cols[i]);g2.addColorStop(1,cols[j]);
+      c.beginPath();c.moveTo(ax,ay);c.lineTo(bx,by);
+      c.strokeStyle=g2;c.lineWidth=3.4;c.globalAlpha=.6;c.stroke();c.globalAlpha=1;
+      for(let kk=0;kk<3;kk++){const uu=((t*3+kk*.33+i*.17)%1);
+        c.beginPath();c.arc(ax+(bx-ax)*uu,ay+(by-ay)*uu,2.2,0,7);
+        c.fillStyle="rgba(255,255,255,.75)";c.fill();}
+    }
+    flav.forEach((f,i)=>{const[x,y]=P[i];
+      ringAt(c,x,y,qr+4,cols[i],2);
+      ball(c,x,y,qr,f[2],f[0]);
+      c.font='700 11px "Roboto Mono",monospace';c.textAlign="center";
+      c.fillStyle=cols[i];c.fillText(f[1],x,y+qr+16);});
+    if(t>.74){
+      c.font='700 14px "Roboto Mono",monospace';c.textAlign="center";
+      c.fillStyle="#6EE7B7";
+      c.fillText("+2/3  +2/3  −1/3  =  +1",cx,cy+base*.40);
+    }
+  }
+ }},
+{ms:9000,step:"Step 6",title:"Then make it react",
+ desc:"Bonds break, atoms scatter, new bonds form. Count them: nothing is created, nothing lost.",
+ draw(c,w,h,t){
+  bgGlow(c,w,h,"#3B5BFF");
+  const base=Math.min(w,h),k=base/300,cx=w/2,cy=h/2;
+  const A=[{s:"H",x:-150,y:-46},{s:"H",x:-108,y:-46},
+           {s:"H",x:-150,y:52},{s:"H",x:-108,y:52},
+           {s:"O",x:8,y:-4},{s:"O",x:64,y:-4}];
+  const AB=[[0,1,1],[2,3,1],[4,5,2]];
+  const B=[{s:"O",x:-78,y:0},{s:"H",x:-126,y:36},{s:"H",x:-30,y:36},
+           {s:"O",x:84,y:0},{s:"H",x:36,y:36},{s:"H",x:132,y:36}];
+  const BB=[[0,1,1],[0,2,1],[3,4,1],[3,5,1]];
+  const map=[1,2,4,5,0,3];
+  const p=clamp((t-.10)/.70,0,1);
+  const sc=[];A.forEach((a,i)=>{const ang=i*2.399963,r=base*.26*(.6+((i*37)%50)/100*.7);
+    sc.push([Math.cos(ang)*r,Math.sin(ang)*r*.8]);});
+  const pos=i=>{const a=A[i],b=B[map[i]];
+    const ax=cx+a.x*k,ay=cy+a.y*k,bx=cx+b.x*k,by=cy+b.y*k;
+    const sx=cx+sc[i][0],sy=cy+sc[i][1];
+    if(p<=0)return[ax,ay];if(p>=1)return[bx,by];
+    if(p<.5){const u=ease(p/.5);return[ax+(sx-ax)*u,ay+(sy-ay)*u];}
+    const u=ease((p-.5)/.5);return[sx+(bx-sx)*u,sy+(by-sy)*u];};
+  const aA=1-clamp(p/.40,0,1),aB=clamp((p-.60)/.40,0,1);
+  c.lineCap="round";
+  if(aA>.01){c.globalAlpha=aA;
+    AB.forEach(bd=>{const[ax,ay]=pos(bd[0]),[bx,by]=pos(bd[1]);
+      const dx=bx-ax,dy=by-ay,d=Math.hypot(dx,dy)||1,nx=-dy/d,ny=dx/d;
+      (bd[2]===2?[-3.4,3.4]:[0]).forEach(o=>{c.beginPath();
+        c.moveTo(ax+nx*o,ay+ny*o);c.lineTo(bx+nx*o,by+ny*o);
+        c.strokeStyle="rgba(200,208,232,.9)";c.lineWidth=4*k;c.stroke();});});
+    c.globalAlpha=1;}
+  if(aB>.01){c.globalAlpha=aB;
+    const inv=[];map.forEach((m,i)=>{inv[m]=i;});
+    BB.forEach(bd=>{const[ax,ay]=pos(inv[bd[0]]),[bx,by]=pos(inv[bd[1]]);
+      c.beginPath();c.moveTo(ax,ay);c.lineTo(bx,by);
+      c.strokeStyle="rgba(150,231,200,.95)";c.lineWidth=4*k;c.stroke();});
+    c.globalAlpha=1;}
+  A.forEach((a,i)=>{const[x,y]=pos(i);ball(c,x,y,(a.s==="O"?20:13)*k,CPK[a.s],a.s);});
+  if(p>.40&&p<.62){const f=1-Math.abs(p-.51)/.11;
+    const fg=c.createRadialGradient(cx,cy,0,cx,cy,base*.55);
+    fg.addColorStop(0,"rgba(255,214,150,"+(f*.5).toFixed(3)+")");
+    fg.addColorStop(1,"rgba(0,0,0,0)");c.fillStyle=fg;c.fillRect(0,0,w,h);}
+  if(p>.5){for(let i=0;i<16;i++){const a=i/16*6.283+p*1.4,u=(p-.5)/.5;
+    const r=base*.16+u*base*.42;
+    c.beginPath();c.arc(cx+Math.cos(a)*r,cy+Math.sin(a)*r*.85,2.6,0,7);
+    c.fillStyle="rgba(255,186,90,"+(1-u).toFixed(2)+")";c.fill();}}
+  c.font='600 13px "Roboto Mono",monospace';c.textAlign="center";
+  c.fillStyle="rgba(200,206,222,.62)";
+  c.fillText("2H₂ + O₂  ⟶  2H₂O     ·     6 atoms in · 6 atoms out",cx,h-22);
+ }}
+];
+
+/* ============================================================
+   PLAYER
+   ============================================================ */
+const FORGE_URL="https://claude.ai/artifact/HoqQkHspACSxWfAULgCfiz";
+const LENS_URL="https://claude.ai/artifact/TAwRzPPgkaN1pTprdxczL6";
+const D=mkCanvas($("dc"));
+const TOTAL=SCENES.reduce((s,x)=>s+x.ms,0);
+let elapsed=0,last=null,playing=true,shown=-1,visible=true;
+const dots=$("dots");
+SCENES.forEach(()=>{const i=document.createElement("i");i.innerHTML="<b></b>";dots.appendChild(i);});
+function setCaption(i){
+  const s=SCENES[i];
+  $("capStep").textContent=s.step+" of "+SCENES.length;
+  $("capTitle").textContent=s.title;
+  $("capDesc").textContent=s.desc;
+  [...dots.children].forEach((d,j)=>{d.classList.toggle("done",j<i);
+    if(j>i)d.firstChild.style.width="0%";});
+}
+function tick(ts){
+  if(last==null)last=ts;
+  const dt=Math.min(64,ts-last);last=ts;
+  if(playing&&visible)elapsed=(elapsed+dt)%TOTAL;
+  let acc=0,idx=0,local=0;
+  for(let i=0;i<SCENES.length;i++){
+    if(elapsed<acc+SCENES[i].ms){idx=i;local=(elapsed-acc)/SCENES[i].ms;break;}
+    acc+=SCENES[i].ms;idx=i;local=1;
+  }
+  if(idx!==shown){shown=idx;setCaption(idx);}
+  dots.children[idx].firstChild.style.width=(local*100).toFixed(1)+"%";
+  const s=SCENES[idx];
+  try{s.draw(D.c,D.w,D.h,local);}catch(e){}
+  const fade=Math.min(local/.05,(1-local)/.05,1);
+  if(fade<1){D.c.fillStyle="rgba(10,12,18,"+(1-Math.max(0,fade)).toFixed(3)+")";
+    D.c.fillRect(0,0,D.w,D.h);}
+  requestAnimationFrame(tick);
+}
+$("pp").onclick=()=>{
+  playing=!playing;
+  $("ppIcon").innerHTML=playing
+    ?'<rect x="6" y="5" width="4" height="14" rx="1.3"/><rect x="14" y="5" width="4" height="14" rx="1.3"/>'
+    :'<path d="M8 5.5v13l11-6.5-11-6.5Z"/>';
+  $("pp").setAttribute("aria-label",playing?"Pause the tour":"Play the tour");
+};
+[...dots.children].forEach((d,i)=>{
+  d.style.cursor="pointer";
+  d.onclick=()=>{let acc=0;for(let j=0;j<i;j++)acc+=SCENES[j].ms;elapsed=acc+1;};
+});
+new IntersectionObserver(es=>{visible=es[0].isIntersecting;},{threshold:.15}).observe($("dc"));
+requestAnimationFrame(tick);
+
+/* ============================================================
+   TOOL CARDS
+   ============================================================ */
+const TOOLS=[
+ {c:"#A855F7",tag:"Start from the real world",name:"Matter Lens",url:LENS_URL,
+  p:"Photograph anything, box the part you care about, and travel inward six orders of magnitude at a time.",
+  li:["Claude reads the photo and names the real substances in it",
+      "Every atom, electron, proton and quark is clickable",
+      "Reactions with a real balancer and atom-by-atom morphing"],
+  art:"atom"},
+ {c:"#3B5BFF",tag:"Start from nothing",name:"Orbital Forge",url:FORGE_URL,
+  p:"All 118 elements on one board. Build atoms particle by particle, then bond them into molecules by hand.",
+  li:["Drag a temperature slider and watch the table melt",
+      "Add a proton and the element transmutes under your hands",
+      "Snap atoms together and it names what you built"],
+  art:"table"}
+];
+const cards=$("toolCards");
+TOOLS.forEach(t=>{
+  const a=document.createElement("a");
+  a.className="tool";a.href=t.url;a.target="_blank";a.rel="noopener noreferrer";
+  a.style.setProperty("--c",t.c);
+  a.innerHTML='<div class="top"><canvas></canvas></div><div class="bd">'+
+    '<span class="tg">'+t.tag+'</span><h3>'+t.name+'</h3><p>'+t.p+'</p><ul>'+
+    t.li.map(x=>'<li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" '+
+      'stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.2 5.2L20 7"/></svg>'+x+'</li>').join("")+
+    '</ul><span class="go">Open '+t.name+
+    ' <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" '+
+    'stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></span></div>';
+  cards.appendChild(a);
+  const cv=a.querySelector("canvas"),M=mkCanvas(cv);
+  const kind=t.art;
+  (function loop(ts){
+    const t2=(ts||0)/1000,c=M.c,w=M.w,h=M.h;
+    if(w&&h){
+      c.clearRect(0,0,w,h);c.fillStyle="#0A0C12";c.fillRect(0,0,w,h);
+      const g=c.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h)*.7);
+      g.addColorStop(0,t.c+"2E");g.addColorStop(1,"rgba(0,0,0,0)");
+      c.fillStyle=g;c.fillRect(0,0,w,h);
+      if(kind==="atom"){
+        const cx=w/2,cy=h/2,base=Math.min(w,h);
+        [[base*.20,2],[base*.36,6]].forEach(([r,n],si)=>{
+          ringAt(c,cx,cy,r,"rgba(255,255,255,.12)",1);
+          const dir=si?-1:1;
+          for(let i=0;i<n;i++){const ang=t2*(.7-si*.2)*dir+i*(6.283/n);
+            const x=cx+Math.cos(ang)*r,y=cy+Math.sin(ang)*r;
+            c.beginPath();c.arc(x,y,3.4,0,7);c.fillStyle="#DCE3FF";
+            c.shadowColor="#93A6FF";c.shadowBlur=10;c.fill();c.shadowBlur=0;}
+        });
+        const ng=c.createRadialGradient(cx-6,cy-7,2,cx,cy,base*.09);
+        ng.addColorStop(0,"#FFD9DD");ng.addColorStop(.35,"#FF6E7C");ng.addColorStop(1,"#8E2033");
+        c.beginPath();c.arc(cx,cy,base*.09,0,7);c.fillStyle=ng;c.fill();
+      } else {
+        const cols=13,rows=6,pad=12;
+        const cw=(w-pad*2)/cols,ch=(h-pad*2)/rows,sz=Math.min(cw,ch)-3;
+        const pal=["#FF7A6B","#FF9E4F","#3B5BFF","#5FC9E8","#10B981","#9BE870","#E8D44D","#A855F7"];
+        for(let r=0;r<rows;r++)for(let q=0;q<cols;q++){
+          const d=(q/cols*2+r/rows)*1.2;
+          const pulse=(Math.sin(t2*1.3-d*2.2)+1)/2;
+          const col=pal[(q*3+r*5)%pal.length];
+          c.globalAlpha=.20+pulse*.75;
+          c.beginPath();
+          c.roundRect(pad+q*cw+(cw-sz)/2,pad+r*ch+(ch-sz)/2,sz,sz,3);
+          c.fillStyle=col;c.fill();c.globalAlpha=1;
+        }
+      }
+    }
+    requestAnimationFrame(loop);
+  })(0);
+});
+
+/* ============================================================
+   LADDER + SOURCES
+   ============================================================ */
+const LADDER=[
+ ["10⁻¹ m","Object","A lemon in your hand. The only rung you can actually see.","#F59E0B"],
+ ["10⁻³ m","Substance","Water, citric acid, sugar — sorted by how much there is.","#10B981"],
+ ["10⁻⁹ m","Structure","One molecule, isolated. Or a lattice that never ends.","#3B5BFF"],
+ ["10⁻¹⁰ m","Atom","Shells you can count. Electrons you can click open.","#A855F7"],
+ ["10⁻¹⁴ m","Nucleus","A pea on the centre spot of a stadium.","#EF4444"],
+ ["<10⁻¹⁸ m","Quark","Three of them, and nothing inside. Physics stops here.","#F97316"]
+];
+$("ladder").innerHTML=LADDER.map(([sz,nm,de,c])=>
+ '<div class="rung" style="--c:'+c+'"><div class="sz">'+sz+'</div>'+
+ '<div class="nm">'+nm+'</div><div class="de">'+de+'</div></div>').join("");
+
+const REFWORKS=[
+ ["NIST Chemistry WebBook","Thermochemical data, phase-change points and spectra. US National Institute of Standards and Technology.","https://webbook.nist.gov/chemistry/"],
+ ["PubChem","Open chemical database with structures and properties. US National Library of Medicine.","https://pubchem.ncbi.nlm.nih.gov/"],
+ ["IUPAC Periodic Table","The current standard atomic weights and element names.","https://iupac.org/what-we-do/periodic-table-of-elements/"],
+ ["IUPAC Gold Book","Agreed definitions for the chemical terms used throughout.","https://goldbook.iupac.org/"],
+ ["CRC Handbook of Chemistry and Physics","The standard printed reference for physical constants.","https://hbcp.chemnetbase.com/"],
+ ["Review of Particle Physics","Particle Data Group. Source for the electron and quark figures.","https://pdg.lbl.gov/"]
+];
+$("srcs").innerHTML=REFWORKS.map(([t,d,u])=>
+ '<a class="src" href="'+u+'" target="_blank" rel="noopener noreferrer">'+
+ '<div class="t">'+t+'</div><div class="d">'+d+'</div></a>').join("");
+
+$("honesty").innerHTML=
+ '<b>What is solid and what is not.</b> Element data, bond orders, reaction equations and particle '+
+ 'figures are standard reference values, and every reaction in the library was checked against an '+
+ 'independent equation balancer. Two things are deliberately approximate and labelled as such inside '+
+ 'the tools: molecular shapes generated from a formula that is not in the built-in library are sketches '+
+ 'with the right atom counts but guessed connectivity, and nuclear stability is estimated from distance '+
+ 'to the most common isotope rather than a full nuclide table. No reference on this page was generated — '+
+ 'they are all links to real databases you can check.';
+</script>

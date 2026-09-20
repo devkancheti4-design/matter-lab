@@ -1,0 +1,3018 @@
+<title>Matter Lens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Roboto+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  /* surfaces — light */
+  --bg:#FFFFFF; --surf:#FFFFFF; --s1:#F5F7FB; --s2:#ECEFF6;
+  --s2h:#E4E8F2;
+  --line:#DFE3ED; --line-soft:#EBEEF5;
+  --on:#161A22; --on2:#575D6C; --on3:#8B91A1;
+  --pri:#3B5BFF; --on-pri:#FFFFFF; --pri-soft:#EAEEFF; --pri-line:#C3CEFF;
+  /* the stage is a viewport: dark in both themes */
+  --stage:#0A0C12; --stage2:#11141C; --stage-line:rgba(255,255,255,.07);
+  --stage-on:#EDEFF6; --stage-on2:#9AA1B4;
+  /* scale accents */
+  --a-object:#F59E0B; --a-substance:#10B981; --a-structure:#3B5BFF;
+  --a-atom:#A855F7; --a-nucleus:#EF4444; --a-quark:#F97316;
+  --ok:#10B981; --warn:#F59E0B; --bad:#EF4444;
+  --e1:0 1px 2px rgba(16,20,32,.07), 0 1px 3px rgba(16,20,32,.05);
+  --e2:0 2px 6px rgba(16,20,32,.07), 0 6px 16px rgba(16,20,32,.07);
+  --e3:0 8px 20px rgba(16,20,32,.10), 0 20px 48px rgba(16,20,32,.12);
+  --r-s:10px; --r-m:14px; --r-l:20px; --r-xl:28px;
+  --ff:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --ff-m:"Roboto Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C0E13; --surf:#12151B; --s1:#171B23; --s2:#1F242E; --s2h:#262C38;
+    --line:#2A303C; --line-soft:#21262F;
+    --on:#E8EAF0; --on2:#A3A9B8; --on3:#6F7584;
+    --pri:#93A6FF; --on-pri:#0C0E13; --pri-soft:#1A2036; --pri-line:#333D5E;
+    --e1:0 1px 2px rgba(0,0,0,.5); --e2:0 2px 8px rgba(0,0,0,.5);
+    --e3:0 10px 30px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C0E13; --surf:#12151B; --s1:#171B23; --s2:#1F242E; --s2h:#262C38;
+  --line:#2A303C; --line-soft:#21262F;
+  --on:#E8EAF0; --on2:#A3A9B8; --on3:#6F7584;
+  --pri:#93A6FF; --on-pri:#0C0E13; --pri-soft:#1A2036; --pri-line:#333D5E;
+  --e1:0 1px 2px rgba(0,0,0,.5); --e2:0 2px 8px rgba(0,0,0,.5);
+  --e3:0 10px 30px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--bg);color:var(--on);
+  font-family:var(--ff);font-size:14px;line-height:1.5;letter-spacing:-.003em;
+  -webkit-font-smoothing:antialiased;overflow:hidden;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer;padding:0}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px;border-radius:8px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;border:3px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:var(--on3);background-clip:content-box}
+#app{height:100%;display:flex;flex-direction:column;background:var(--bg)}
+
+/* ===================== app bar ===================== */
+.top{
+  flex:0 0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:10px clamp(12px,2vw,20px);background:var(--surf);
+  border-bottom:1px solid var(--line-soft);z-index:20;
+}
+.logo{display:flex;align-items:center;gap:11px;min-width:0}
+.lens{
+  width:34px;height:34px;flex:0 0 auto;border-radius:12px;position:relative;overflow:hidden;
+  background:conic-gradient(from 200deg,#3B5BFF,#A855F7,#EF4444,#F59E0B,#10B981,#3B5BFF);
+  box-shadow:var(--e1);
+}
+.lens::after{
+  content:"";position:absolute;inset:7px;border-radius:50%;background:var(--surf);
+}
+.lens::before{
+  content:"";position:absolute;inset:11px;border-radius:50%;
+  background:radial-gradient(circle at 35% 32%,#fff,#3B5BFF 60%,#1B2B8A);
+  animation:pulse 3.4s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(.72)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wordmark{font-weight:700;font-size:17px;letter-spacing:-.022em;line-height:1.15;white-space:nowrap}
+.tagline{font-size:11px;color:var(--on3);line-height:1.2;white-space:nowrap;letter-spacing:0}
+.top .grow{flex:1}
+
+.crumbs{display:flex;align-items:center;gap:1px;flex-wrap:wrap;min-width:0}
+.crumbs button{
+  padding:5px 10px;border-radius:999px;color:var(--on2);font-size:13px;font-weight:500;
+  transition:background .14s,color .14s;max-width:170px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;
+}
+.crumbs button:hover{background:var(--s2);color:var(--on)}
+.crumbs button.now{color:var(--pri);background:var(--pri-soft);font-weight:600}
+.crumbs .sep{color:var(--on3);font-size:14px;user-select:none;padding:0 1px}
+
+.ghost{
+  border:1px solid var(--line);border-radius:999px;padding:8px 15px;font-size:13px;font-weight:600;
+  color:var(--on);background:var(--surf);transition:.14s;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:7px;letter-spacing:-.01em;
+}
+.ghost:hover{background:var(--s2);box-shadow:var(--e1)}
+.ghost:active{background:var(--s2h)}
+.ghost.on{background:var(--pri);border-color:var(--pri);color:var(--on-pri);box-shadow:var(--e1)}
+.ghost svg{flex:0 0 auto}
+
+/* ===================== body ===================== */
+.body{flex:1 1 auto;min-height:0;display:flex;background:var(--bg)}
+
+/* ---- scale rail ---- */
+.rail{
+  flex:0 0 104px;border-right:1px solid var(--line-soft);padding:14px 8px;
+  display:flex;flex-direction:column;gap:2px;position:relative;background:var(--surf);
+}
+.rail::before{
+  content:"";position:absolute;left:52px;top:34px;bottom:34px;width:2px;border-radius:2px;
+  background:var(--line-soft);
+}
+.rung{
+  position:relative;padding:9px 4px;display:flex;flex-direction:column;align-items:center;
+  gap:5px;transition:.16s;border-radius:var(--r-m);
+}
+.rung:disabled{cursor:not-allowed;opacity:.34}
+.rung .dot{
+  width:14px;height:14px;border-radius:50%;background:var(--surf);
+  border:2px solid var(--line);position:relative;z-index:2;transition:.2s;
+}
+.rung .nm{font-size:11px;font-weight:600;color:var(--on2);letter-spacing:-.01em}
+.rung .sz{font-family:var(--ff-m);font-size:9px;color:var(--on3)}
+.rung:not(:disabled):hover{background:var(--s1)}
+.rung:not(:disabled):hover .nm{color:var(--on)}
+.rung.done .dot{background:var(--on3);border-color:var(--on3)}
+.rung.live{background:var(--s1)}
+.rung.live .dot{
+  background:var(--c,var(--pri));border-color:var(--c,var(--pri));transform:scale(1.2);
+  box-shadow:0 0 0 5px color-mix(in srgb,var(--c,var(--pri)) 18%,transparent);
+}
+.rung.live .nm{color:var(--on);font-weight:700}
+
+/* ---- stage (always dark: it is a viewport) ---- */
+.stage{
+  flex:1 1 auto;min-width:0;position:relative;display:flex;flex-direction:column;
+  overflow:hidden;background:var(--stage);
+}
+.scene{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .28s}
+.scene.live{opacity:1;pointer-events:auto}
+.holder{flex:1;position:relative;min-height:0}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+
+.hud{position:absolute;pointer-events:none;font-family:var(--ff-m);font-size:10.5px;color:var(--stage-on2)}
+.hud.tl{top:14px;left:16px}.hud.tr{top:14px;right:16px;text-align:right}
+.hud.bl{bottom:14px;left:16px}.hud.br{bottom:14px;right:16px;text-align:right}
+.foot{
+  flex:0 0 auto;border-top:1px solid var(--stage-line);padding:10px clamp(12px,2vw,18px);
+  display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-size:12px;
+  color:var(--stage-on2);background:rgba(255,255,255,.02);
+}
+.foot kbd{
+  font-family:var(--ff-m);border:1px solid rgba(255,255,255,.18);border-radius:5px;
+  padding:1px 5px;color:var(--stage-on);font-size:10.5px;
+}
+.foot .hot{color:#6EE7B7;font-weight:600}
+
+/* ---- inspector ---- */
+.insp{
+  flex:0 0 372px;border-left:1px solid var(--line-soft);overflow-y:auto;
+  overscroll-behavior:contain;background:var(--surf);
+}
+.blk{padding:18px 20px;border-bottom:1px solid var(--line-soft)}
+.blk:last-child{border-bottom:0}
+.kicker{
+  font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--on3);margin:0 0 12px;
+}
+.title-xl{font-size:28px;font-weight:700;line-height:1.12;letter-spacing:-.03em;margin:0 0 7px;text-wrap:balance}
+.title-l{font-size:20px;font-weight:700;line-height:1.2;margin:0 0 5px;letter-spacing:-.02em}
+.lede{font-size:14px;line-height:1.6;color:var(--on2);margin:0}
+.muted{color:var(--on2);font-size:13px;line-height:1.6;margin:0}
+
+.tagrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.tg{
+  font-size:11.5px;font-weight:600;padding:4px 11px;border-radius:999px;letter-spacing:-.005em;
+  color:var(--c,var(--pri));background:color-mix(in srgb,var(--c,var(--pri)) 13%,transparent);
+}
+dl.sheet{display:grid;grid-template-columns:1fr auto;gap:0;margin:0}
+dl.sheet dt{color:var(--on2);font-size:13px;padding:8px 0;border-bottom:1px solid var(--line-soft)}
+dl.sheet dd{
+  margin:0;font-family:var(--ff-m);font-size:12px;text-align:right;color:var(--on);
+  font-variant-numeric:tabular-nums;padding:8px 0;border-bottom:1px solid var(--line-soft);
+}
+dl.sheet dt:last-of-type,dl.sheet dd:last-of-type{border-bottom:0}
+dl.sheet dd.q{color:var(--ok)}
+dl.sheet dd.n{color:var(--on3)}
+
+.quote{
+  background:var(--s1);border-radius:var(--r-m);padding:13px 15px;
+  font-size:13.5px;line-height:1.6;color:var(--on2);margin:0;
+  border-left:3px solid var(--c,var(--pri));
+}
+.stack{display:flex;flex-direction:column;gap:8px}
+.card{
+  width:100%;text-align:left;border:1px solid var(--line);border-radius:var(--r-m);
+  padding:12px 14px;background:var(--surf);transition:.15s;display:flex;align-items:center;gap:13px;
+}
+.card:hover{background:var(--s1);box-shadow:var(--e2);border-color:var(--line)}
+.card:active{background:var(--s2)}
+.card .swatch{
+  width:38px;height:38px;flex:0 0 auto;border-radius:11px;display:grid;place-items:center;
+  font-family:var(--ff-m);font-size:12px;font-weight:700;color:#fff;
+  background:var(--c,var(--pri));
+}
+.card .cbody{min-width:0;flex:1}
+.card .cname{font-size:14px;font-weight:600;line-height:1.3;letter-spacing:-.01em}
+.card .cmeta{font-family:var(--ff-m);font-size:11px;color:var(--on3);margin-top:2px}
+.card .pct{font-family:var(--ff-m);font-size:13px;color:var(--c,var(--pri));font-weight:700;font-variant-numeric:tabular-nums}
+.meter{height:4px;border-radius:4px;background:var(--s2);overflow:hidden;margin-top:8px}
+.meter i{display:block;height:100%;background:var(--c,var(--pri));border-radius:4px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+
+.btn{
+  width:100%;border-radius:999px;padding:12px 18px;font-size:14px;font-weight:600;
+  background:var(--pri);color:var(--on-pri);transition:.14s;letter-spacing:-.01em;
+  display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:var(--e1);
+}
+.btn:hover{box-shadow:var(--e2);filter:brightness(1.05)}
+.btn:active{transform:scale(.985)}
+.btn.sec{background:var(--surf);color:var(--on);border:1px solid var(--line);box-shadow:none}
+.btn.sec:hover{background:var(--s1);box-shadow:var(--e1)}
+.btn.tonal{background:var(--pri-soft);color:var(--pri);box-shadow:none}
+.btn.tonal:hover{background:color-mix(in srgb,var(--pri) 18%,transparent)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none;filter:none}
+.btnrow{display:flex;gap:8px}
+.btnrow .btn{width:auto;flex:1}
+
+/* ===================== scan ===================== */
+.scan-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:clamp(14px,3vw,28px);overflow-y:auto}
+.scan-inner{width:100%;max-width:900px;display:flex;flex-direction:column;gap:18px}
+.viewport{
+  position:relative;width:100%;aspect-ratio:16/10;max-height:50vh;border-radius:var(--r-xl);
+  overflow:hidden;background:var(--stage2);border:1px solid rgba(255,255,255,.08);
+  display:grid;place-items:center;box-shadow:var(--e3);
+}
+.viewport video,.viewport img{width:100%;height:100%;object-fit:cover;display:block}
+.vp-idle{text-align:center;padding:28px;max-width:440px}
+.vp-idle .big{
+  font-size:clamp(21px,3.2vw,29px);font-weight:700;line-height:1.16;
+  margin:0 0 10px;letter-spacing:-.03em;color:var(--stage-on);text-wrap:balance;
+}
+.vp-idle .muted{color:var(--stage-on2)}
+.reticle{position:absolute;inset:0;pointer-events:none}
+.reticle span{position:absolute;width:30px;height:30px;border:2.5px solid rgba(255,255,255,.9);border-radius:3px}
+.reticle span:nth-child(1){top:18px;left:18px;border-right:0;border-bottom:0;border-radius:10px 0 0 0}
+.reticle span:nth-child(2){top:18px;right:18px;border-left:0;border-bottom:0;border-radius:0 10px 0 0}
+.reticle span:nth-child(3){bottom:18px;left:18px;border-right:0;border-top:0;border-radius:0 0 0 10px}
+.reticle span:nth-child(4){bottom:18px;right:18px;border-left:0;border-top:0;border-radius:0 0 10px 0}
+.sweep{
+  position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,#6EE7B7,transparent);
+  box-shadow:0 0 24px 4px rgba(110,231,183,.55);animation:sweep 2.2s ease-in-out infinite;
+}
+@keyframes sweep{0%,100%{top:8%;opacity:.25}50%{top:92%;opacity:1}}
+.busy{position:absolute;inset:0;display:grid;place-items:center;background:rgba(10,12,18,.82);backdrop-filter:blur(6px);text-align:center;padding:24px;color:var(--stage-on)}
+.busy .ring{width:44px;height:44px;border-radius:50%;border:3px solid rgba(255,255,255,.14);border-top-color:#6EE7B7;animation:spin 1s linear infinite;margin:0 auto 14px}
+
+.picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(124px,1fr));gap:10px}
+.spec{
+  border:1px solid var(--line);border-radius:var(--r-l);padding:16px 12px;background:var(--surf);
+  display:flex;flex-direction:column;align-items:center;gap:9px;transition:.16s;
+}
+.spec:hover{box-shadow:var(--e2);transform:translateY(-2px);border-color:var(--line)}
+.spec:active{transform:translateY(0);background:var(--s1)}
+.spec .ico{
+  width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
+  background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);
+}
+.spec .ico svg{width:24px;height:24px}
+.spec .l{font-size:13px;font-weight:600;text-align:center;line-height:1.3;letter-spacing:-.01em}
+.spec .s{font-size:11px;color:var(--on3);text-align:center;line-height:1.3}
+
+.notice{
+  border-radius:var(--r-m);padding:13px 15px;font-size:13px;line-height:1.55;
+  background:color-mix(in srgb,var(--c,var(--warn)) 12%,transparent);
+  color:var(--on);border:1px solid color-mix(in srgb,var(--c,var(--warn)) 30%,transparent);
+  display:flex;gap:11px;align-items:flex-start;
+}
+.notice b{font-weight:700}
+.notice .nico{flex:0 0 auto;width:20px;height:20px;color:var(--c,var(--warn));margin-top:1px}
+.scan-wrap .notice{background:rgba(255,255,255,.06);color:var(--stage-on);border-color:rgba(255,255,255,.12)}
+.scan-wrap .kicker{color:var(--stage-on2)}
+.scan-wrap .spec{background:rgba(255,255,255,.055);border-color:rgba(255,255,255,.11)}
+.scan-wrap .spec:hover{background:rgba(255,255,255,.10)}
+.scan-wrap .spec .l{color:var(--stage-on)}
+.scan-wrap .spec .s{color:var(--stage-on2)}
+.scan-wrap .btn.sec{background:rgba(255,255,255,.08);color:var(--stage-on);border-color:rgba(255,255,255,.16)}
+.scan-wrap .btn.sec:hover{background:rgba(255,255,255,.14)}
+.scan-wrap .notice b{color:var(--c,var(--warn))}
+
+/* ===================== bits ===================== */
+.pop{
+  position:absolute;left:50%;bottom:22px;transform:translateX(-50%) translateY(10px);
+  background:#22262F;color:#F2F4F8;border-radius:10px;padding:10px 18px;font-size:13px;
+  font-weight:500;box-shadow:var(--e3);opacity:0;transition:.24s;pointer-events:none;
+  z-index:30;white-space:nowrap;
+}
+.pop.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.el-chip{
+  border:1px solid var(--line);border-radius:11px;padding:6px 9px;min-width:46px;
+  display:flex;flex-direction:column;align-items:center;background:var(--surf);transition:.14s;
+}
+.el-chip .s{font-weight:700;font-size:14px;color:var(--c);line-height:1.1;letter-spacing:-.02em}
+.el-chip .z{font-family:var(--ff-m);font-size:9.5px;color:var(--on3);line-height:1.3}
+.el-chip:hover{box-shadow:var(--e2);transform:translateY(-2px);border-color:color-mix(in srgb,var(--c) 45%,var(--line))}
+.seg{display:flex;gap:3px;padding:4px;border-radius:999px;background:var(--s2)}
+.seg button{
+  flex:1;padding:8px 12px;border-radius:999px;font-size:13px;font-weight:600;
+  color:var(--on2);transition:.14s;white-space:nowrap;letter-spacing:-.01em;
+}
+.seg button:hover{color:var(--on)}
+.seg button[aria-pressed="true"]{background:var(--surf);color:var(--on);box-shadow:var(--e1)}
+.field{
+  width:100%;background:var(--surf);border:1px solid var(--line);border-radius:var(--r-m);
+  padding:11px 14px;font-size:14px;outline:none;transition:.14s;
+}
+.field:focus{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-soft)}
+.mono{font-family:var(--ff-m)}
+
+/* ===================== reactions ===================== */
+.rx-wrap{flex:1;display:flex;flex-direction:column;min-height:0}
+.rx-eq{
+  flex:0 0 auto;padding:16px clamp(12px,2vw,20px);border-bottom:1px solid var(--stage-line);
+  display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;
+  font-size:clamp(17px,2.4vw,24px);font-weight:600;color:var(--stage-on);
+  letter-spacing:-.02em;min-height:64px;text-align:center;
+}
+.rx-eq .co{color:#6EE7B7;font-family:var(--ff-m);font-size:.82em;margin-right:1px}
+.rx-eq .sp{color:var(--stage-on2);font-size:.8em;margin:0 2px}
+.rx-eq .arrow{color:#6EE7B7;font-size:1.05em;padding:0 4px}
+.rx-eq .ph{color:var(--stage-on2);font-weight:400}
+.rx-slot{
+  display:flex;gap:7px;flex-wrap:wrap;align-items:center;justify-content:center;
+}
+.rx-tag{
+  display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:5px 7px 5px 13px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
+  font-size:15px;font-weight:600;color:var(--stage-on);
+}
+.rx-tag button{
+  width:20px;height:20px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(255,255,255,.12);color:var(--stage-on2);font-size:13px;line-height:1;
+}
+.rx-tag button:hover{background:rgba(255,255,255,.22);color:#fff}
+.rx-empty{color:var(--stage-on2);font-weight:400;font-size:15px}
+.rx-shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:7px}
+.rx-pill{
+  border:1px solid var(--line);border-radius:12px;padding:9px 6px;background:var(--surf);
+  display:flex;flex-direction:column;align-items:center;gap:2px;transition:.14s;
+}
+.rx-pill .f{font-family:var(--ff-m);font-size:13px;font-weight:700;color:var(--c,var(--pri))}
+.rx-pill .n{font-size:10px;color:var(--on3);text-align:center;line-height:1.2}
+.rx-pill:hover{box-shadow:var(--e2);transform:translateY(-2px)}
+.rx-pill:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.rx-card{
+  width:100%;text-align:left;border:1px solid var(--line);border-radius:var(--r-m);
+  padding:12px 14px;background:var(--surf);transition:.15s;display:block;
+}
+.rx-card:hover{background:var(--s1);box-shadow:var(--e2)}
+.rx-card .eq{font-family:var(--ff-m);font-size:12.5px;color:var(--on);font-weight:500}
+.rx-card .nm{font-size:12px;color:var(--on3);margin-top:3px}
+.energy{
+  display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r-m);
+  background:color-mix(in srgb,var(--c) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--c) 28%,transparent);
+}
+.energy .v{font-family:var(--ff-m);font-size:18px;font-weight:700;color:var(--c);letter-spacing:-.02em}
+.energy .l{font-size:12px;color:var(--on2);line-height:1.35}
+
+@media (max-width:1080px){.insp{flex-basis:320px}}
+@media (max-width:880px){
+  body{overflow:auto}
+  #app{height:auto;min-height:100%}
+  .body{flex-direction:column}
+  .rail{flex:0 0 auto;flex-direction:row;overflow-x:auto;border-right:0;
+    border-bottom:1px solid var(--line-soft);padding:8px 12px;gap:4px}
+  .rail::before{left:30px;right:30px;top:27px;bottom:auto;height:2px;width:auto}
+  .rung{flex:0 0 auto;min-width:88px;padding:6px 4px}
+  .scene{position:static;display:none}
+  .scene.live{display:flex}
+  .holder{height:58vh;min-height:350px}
+  .insp{flex-basis:auto;border-left:0;border-top:1px solid var(--line-soft)}
+  .top{gap:10px}
+  .crumbs{order:3;width:100%}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.08s!important}}
+</style>
+
+<div id="app">
+  <header class="top">
+    <div class="logo">
+      <div class="lens" aria-hidden="true"></div>
+      <div>
+        <div class="wordmark">Matter Lens</div>
+        <div class="tagline">point &middot; identify &middot; go inside</div>
+      </div>
+    </div>
+    <nav class="crumbs" id="crumbs" aria-label="Where you are"></nav>
+    <div class="grow"></div>
+    <button class="ghost" id="btnReact">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-2.4-2.6M20 16H7l2.4 2.6"/></svg>
+      Reactions
+    </button>
+    <button class="ghost" id="btnCreate">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Create
+    </button>
+    <button class="ghost" id="btnRescan">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.5-6.2M21 12a9 9 0 0 1-15.5 6.2"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>
+      New scan
+    </button>
+  </header>
+
+  <div class="body">
+    <nav class="rail" id="rail" aria-label="Scale"></nav>
+
+    <div class="stage">
+      <!-- ============ SCAN ============ -->
+      <section class="scene live" id="sc-scan">
+        <div class="scan-wrap">
+          <div class="scan-inner">
+            <div class="viewport" id="viewport">
+              <div class="vp-idle" id="vpIdle">
+                <p class="big">Point it at something real.</p>
+                <p class="muted">Everything around you is built from the same hundred-odd
+                  pieces. Scan an object and walk all the way down to the quarks inside it.</p>
+              </div>
+            </div>
+            <div class="btnrow" id="scanBtns"></div>
+            <div id="scanNote"></div>
+            <div>
+              <p class="kicker" style="margin-bottom:10px">Or start from a specimen</p>
+              <div class="picker" id="picker"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ REACTIONS ============ -->
+      <section class="scene" id="sc-rx">
+        <div class="rx-wrap">
+          <div class="rx-eq" id="rxEq"></div>
+          <div class="holder">
+            <canvas id="rxcv"></canvas>
+            <div class="pop" id="rxPop"></div>
+          </div>
+          <div class="foot" id="rxFoot"></div>
+        </div>
+      </section>
+
+      <!-- ============ EVERYTHING BELOW SCAN ============ -->
+      <section class="scene" id="sc-view">
+        <div class="holder">
+          <canvas id="cv" role="img" aria-label="Interactive view. Its objects are listed as buttons after this canvas."></canvas>
+          <div class="a11y" id="a11y"></div>
+          <div class="hud tl" id="hudTL"></div>
+          <div class="hud tr" id="hudTR"></div>
+          <div class="hud bl scalebar" id="hudBL"></div>
+          <div class="hud br" id="hudBR"></div>
+          <div class="pop" id="pop" role="status" aria-live="polite"></div>
+          <div class="sr" id="ann" aria-live="polite" role="status"></div>
+        </div>
+        <div class="foot" id="foot"></div>
+      </section>
+    </div>
+
+    <aside class="insp" id="insp"></aside>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   ELEMENTS — sym|name|mass|cat|electronegativity|radius(pm)|note
+   ============================================================ */
+const RAW=`
+H|Hydrogen|1.008|nm|2.20|53|Nine in every ten atoms in the universe.
+He|Helium|4.0026|ng|0|31|Found in the Sun before it was found on Earth.
+Li|Lithium|6.94|am|0.98|167|Light enough to float on water, which it then ignites.
+Be|Beryllium|9.0122|ae|1.57|112|Almost transparent to X-rays, so it makes windows for them.
+B|Boron|10.81|ml|2.04|87|Borax laundry powder is a boron mineral.
+C|Carbon|12.011|nm|2.55|67|Forms more compounds than every other element combined.
+N|Nitrogen|14.007|nm|3.04|56|Seventy-eight percent of every breath you take.
+O|Oxygen|15.999|nm|3.44|48|Liquid oxygen is pale blue and sticks to a magnet.
+F|Fluorine|18.998|hg|3.98|42|The most reactive element there is.
+Ne|Neon|20.18|ng|0|38|Burns orange-red in a tube and never any other colour.
+Na|Sodium|22.99|am|0.93|190|Bursts into flame the moment it touches water.
+Mg|Magnesium|24.305|ae|1.31|145|Burns white, bright enough to hurt to look at.
+Al|Aluminium|26.982|pt|1.61|118|Once more precious than gold.
+Si|Silicon|28.085|ml|1.90|111|The backbone of every computer chip made.
+P|Phosphorus|30.974|nm|2.19|98|White phosphorus glows in the dark by itself.
+S|Sulfur|32.06|nm|2.58|88|The smell of struck matches and volcano rims.
+Cl|Chlorine|35.45|hg|3.16|79|A yellow-green gas that keeps pools clean.
+Ar|Argon|39.948|ng|0|71|Fills bulbs so the filament cannot burn away.
+K|Potassium|39.098|am|0.82|243|Bananas are faintly radioactive because of it.
+Ca|Calcium|40.078|ae|1.00|194|Ninety-nine percent of yours is inside your bones.
+Sc|Scandium|44.956|tm|1.36|184|A lump the size of a baseball costs more than a car.
+Ti|Titanium|47.867|tm|1.54|176|As strong as steel and forty-five percent lighter.
+V|Vanadium|50.942|tm|1.63|171|Its salts come in four completely different colours.
+Cr|Chromium|51.996|tm|1.66|166|The red of a ruby and the green of an emerald.
+Mn|Manganese|54.938|tm|1.55|161|Makes steel hard enough for railway track.
+Fe|Iron|55.845|tm|1.83|156|The core of the Earth is mostly a ball of it.
+Co|Cobalt|58.933|tm|1.88|152|Named after goblins German miners blamed for bad ore.
+Ni|Nickel|58.693|tm|1.91|149|A US nickel coin is only a quarter nickel.
+Cu|Copper|63.546|tm|1.90|145|The first metal humans ever smelted.
+Zn|Zinc|65.38|tm|1.65|142|Your sense of taste and smell depend on it.
+Ga|Gallium|69.723|pt|1.81|136|Melts in the palm of your hand.
+Ge|Germanium|72.63|ml|2.01|125|The very first transistor was cut from it.
+As|Arsenic|74.922|ml|2.18|114|The classic poison of Victorian novels.
+Se|Selenium|78.971|nm|2.55|103|The active ingredient in anti-dandruff shampoo.
+Br|Bromine|79.904|hg|2.96|94|The only nonmetal liquid at room temperature.
+Kr|Krypton|83.798|ng|3.00|88|Its orange line once defined the length of the metre.
+Rb|Rubidium|85.468|am|0.82|265|Would melt in your hand if it were not so violent.
+Sr|Strontium|87.62|ae|0.95|219|Paints fireworks bright crimson.
+Y|Yttrium|88.906|tm|1.22|212|Named after Ytterby, a village that named four elements.
+Zr|Zirconium|91.224|tm|1.33|206|Cubic zirconia fakes a diamond convincingly.
+Nb|Niobium|92.906|tm|1.60|198|Anodises into peacock blues, golds and purples.
+Mo|Molybdenum|95.95|tm|2.16|190|Plants cannot fix nitrogen without it.
+Tc|Technetium|98|tm|1.90|183|The first element ever made by human hands.
+Ru|Ruthenium|101.07|tm|2.20|178|Hardens the nibs of fountain pens.
+Rh|Rhodium|102.91|tm|2.28|173|Costs several times more than gold.
+Pd|Palladium|106.42|tm|2.20|169|Soaks up nine hundred times its volume in hydrogen.
+Ag|Silver|107.87|tm|1.93|165|The best electrical conductor of any element.
+Cd|Cadmium|112.41|tm|1.69|161|Gave the Impressionists their cadmium yellow.
+In|Indium|114.82|pt|1.78|156|Makes touchscreens conduct while staying clear.
+Sn|Tin|118.71|pt|1.96|145|Bends with an audible crackle called the tin cry.
+Sb|Antimony|121.76|ml|2.05|133|Ancient Egyptians wore it as kohl eyeliner.
+Te|Tellurium|127.6|ml|2.10|123|Rarer in the crust than platinum.
+I|Iodine|126.9|hg|2.66|115|Added to table salt to protect the thyroid.
+Xe|Xenon|131.29|ng|2.60|108|Drives the ion engines on deep-space probes.
+Cs|Caesium|132.91|am|0.79|298|The second is defined by its atomic clock.
+Ba|Barium|137.33|ae|0.89|253|Swallowed as a meal so the gut shows on X-rays.
+La|Lanthanum|138.91|ln|1.10|226|Half the alloy in a hybrid car battery.
+Ce|Cerium|140.12|ln|1.12|210|The spark in a lighter flint.
+Pr|Praseodymium|140.91|ln|1.13|247|Tints welders' goggles to block the glare.
+Nd|Neodymium|144.24|ln|1.14|206|Makes the strongest permanent magnets built.
+Pm|Promethium|145|ln|1.13|205|Every single atom of it is radioactive.
+Sm|Samarium|150.36|ln|1.17|238|Its magnets keep working at blistering heat.
+Eu|Europium|151.96|ln|1.20|231|The red pixels of old CRT televisions.
+Gd|Gadolinium|157.25|ln|1.20|233|Injected as the contrast dye for MRI scans.
+Tb|Terbium|158.93|ln|1.20|225|Physically changes shape in a magnetic field.
+Dy|Dysprosium|162.5|ln|1.22|228|Keeps wind-turbine magnets working when hot.
+Ho|Holmium|164.93|ln|1.23|226|The strongest magnetic moment of any element.
+Er|Erbium|167.26|ln|1.24|226|Amplifies light inside undersea fibre cables.
+Tm|Thulium|168.93|ln|1.25|222|The rarest of the stable lanthanides.
+Yb|Ytterbium|173.05|ln|1.10|222|Runs the most accurate clocks ever built.
+Lu|Lutetium|174.97|ln|1.27|217|The densest and hardest lanthanide.
+Hf|Hafnium|178.49|tm|1.30|208|Control rods in nuclear submarines.
+Ta|Tantalum|180.95|tm|1.50|200|Inside the capacitor of almost every phone.
+W|Tungsten|183.84|tm|2.36|193|Melts hotter than any other element.
+Re|Rhenium|186.21|tm|1.90|188|Jet engine turbine blades depend on it.
+Os|Osmium|190.23|tm|2.20|185|The densest element found in nature.
+Ir|Iridium|192.22|tm|2.20|180|A worldwide spike of it marks the dinosaurs' end.
+Pt|Platinum|195.08|tm|2.28|177|A catalytic converter holds only a few grams.
+Au|Gold|196.97|tm|2.54|174|All ever mined would fit in a 22-metre cube.
+Hg|Mercury|200.59|tm|2.00|171|The only metal liquid at room temperature.
+Tl|Thallium|204.38|pt|1.62|156|Odourless and tasteless: the poisoner's poison.
+Pb|Lead|207.2|pt|2.33|154|Roman lead pipes gave us the word plumber.
+Bi|Bismuth|208.98|pt|2.02|143|Grows crystals in iridescent rainbow staircases.
+Po|Polonium|209|pt|2.00|135|Marie Curie named it after her native Poland.
+At|Astatine|210|hg|2.20|202|Less than a gram exists in the whole crust.
+Rn|Radon|222|ng|2.20|120|Seeps out of the ground into basements.
+Fr|Francium|223|am|0.70|348|About thirty grams exist on Earth at any moment.
+Ra|Radium|226|ae|0.90|283|Once painted on watch dials so they would glow.
+Ac|Actinium|227|an|1.10|260|Glows pale blue in a dark room.
+Th|Thorium|232.04|an|1.30|237|More abundant than uranium, and a possible fuel.
+Pa|Protactinium|231.04|an|1.50|243|One of the rarest natural elements there is.
+U|Uranium|238.03|an|1.38|240|A kilogram holds the energy of 1,500 tonnes of coal.
+Np|Neptunium|237|an|1.36|221|Named for the planet just beyond Uranus.
+Pu|Plutonium|244|an|1.28|243|Powers the spacecraft sent beyond Jupiter.
+Am|Americium|243|an|1.13|244|Sitting inside most household smoke detectors.
+Cm|Curium|247|an|1.28|245|Glows purple from its own radioactivity.
+Bk|Berkelium|247|an|1.30|244|Barely a gram has ever been made.
+Cf|Californium|251|an|1.30|245|A microgram throws off 170 million neutrons a minute.
+Es|Einsteinium|252|an|1.30|245|First found in the fallout of a hydrogen bomb.
+Fm|Fermium|257|an|1.30|245|Never made in a lump big enough to see.
+Md|Mendelevium|258|an|1.30|246|Named for the man who invented the periodic table.
+No|Nobelium|259|an|1.30|246|Its discovery was disputed for over a decade.
+Lr|Lawrencium|266|an|1.30|246|The last of the actinides.
+Rf|Rutherfordium|267|tm|0|250|The first of the superheavy elements.
+Db|Dubnium|268|tm|0|249|Named for Dubna, the Russian town that made it.
+Sg|Seaborgium|269|tm|0|243|Named after a scientist who was still alive.
+Bh|Bohrium|270|tm|0|241|Only a few dozen atoms have ever existed.
+Hs|Hassium|269|tm|0|230|Its longest-lived atoms last about ten seconds.
+Mt|Meitnerium|278|un|0|228|Named for Lise Meitner, who explained fission.
+Ds|Darmstadtium|281|un|0|232|Made by firing nickel atoms at lead.
+Rg|Roentgenium|282|un|0|238|Named on the centenary of the X-ray.
+Cn|Copernicium|285|un|0|238|Probably a gas at room temperature.
+Nh|Nihonium|286|un|0|240|The first element ever named in Asia.
+Fl|Flerovium|289|un|0|240|Named for the Flerov Laboratory in Russia.
+Mc|Moscovium|290|un|0|240|Confirmed in 2013, long after the first rumours.
+Lv|Livermorium|293|un|0|240|Lives for a few thousandths of a second.
+Ts|Tennessine|294|un|0|240|A handful of atoms is the world supply.
+Og|Oganesson|294|un|0|240|The heaviest element ever created.
+`.trim().split("\n");
+
+const CATS={
+  am:["Alkali metal","#FF7A6B"], ae:["Alkaline earth","#FF9E4F"],
+  tm:["Transition metal","#6C7BFF"], pt:["Post-transition metal","#5FC9E8"],
+  ml:["Metalloid","#46E0B0"], nm:["Reactive nonmetal","#9BE870"],
+  hg:["Halogen","#E8D44D"], ng:["Noble gas","#C08CFF"],
+  ln:["Lanthanide","#FF8FC7"], an:["Actinide","#FF4D9D"], un:["Unknown","#7C879F"]
+};
+const CPK={H:"#F4F6FF",C:"#4A5060",N:"#4F7DFF",O:"#FF4B45",F:"#8FE060",Cl:"#3FD46B",
+Br:"#C0553D",I:"#A64BC4",S:"#FFD123",P:"#FF8A2B",B:"#FFAFAF",Si:"#E7C2A0",Se:"#FF9B4A",
+Li:"#CC80FF",Na:"#AB5CF2",K:"#8F55D8",Rb:"#7A45C8",Cs:"#6B3BB8",
+Be:"#B6FF00",Mg:"#7EE84C",Ca:"#4BE05E",Sr:"#35D96E",Ba:"#1FC96B",
+Fe:"#E06633",Cu:"#C88033",Zn:"#8B8FC0",Ni:"#57D059",Co:"#F090A0",Mn:"#A07AC7",
+Cr:"#8A99C7",Ti:"#C3C6CB",Al:"#C4ADAD",Ag:"#CFD3DA",Au:"#FFC93C",Hg:"#B8B8D0",
+Pb:"#6B6E78",Sn:"#7E8F8F",He:"#62E7E7",Ne:"#6BE0D6",Ar:"#63D9E6",Kr:"#5FC5E8",
+Xe:"#6FA8E8",U:"#3D8FFF",W:"#4FA6C9",Pt:"#D6D9E0",Ni2:"#57D059"};
+
+/* shell occupancies that break the simple aufbau order */
+const SHELL_EXC={24:[2,8,13,1],29:[2,8,18,1],41:[2,8,18,12,1],42:[2,8,18,13,1],
+44:[2,8,18,15,1],45:[2,8,18,16,1],46:[2,8,18,18],47:[2,8,18,18,1],
+57:[2,8,18,18,9,2],58:[2,8,18,19,9,2],64:[2,8,18,25,9,2],78:[2,8,18,32,17,1],
+79:[2,8,18,32,18,1],89:[2,8,18,32,18,9,2],90:[2,8,18,32,18,10,2],91:[2,8,18,32,20,9,2],
+92:[2,8,18,32,21,9,2],93:[2,8,18,32,22,9,2],96:[2,8,18,32,25,9,2],103:[2,8,18,32,32,8,3]};
+const ORDER=[[1,"s"],[2,"s"],[2,"p"],[3,"s"],[3,"p"],[4,"s"],[3,"d"],[4,"p"],[5,"s"],[4,"d"],
+[5,"p"],[6,"s"],[4,"f"],[5,"d"],[6,"p"],[7,"s"],[5,"f"],[6,"d"],[7,"p"]];
+const CAP={s:2,p:6,d:10,f:14};
+const SHELL_LETTER=["K","L","M","N","O","P","Q"];
+const SUPS={0:"⁰",1:"¹",2:"²",3:"³",4:"⁴",5:"⁵",6:"⁶",7:"⁷",8:"⁸",9:"⁹"};
+const SUBS_N={0:"₀",1:"₁",2:"₂",3:"₃",4:"₄",5:"₅",6:"₆",7:"₇",8:"₈",9:"₉"};
+const sup=n=>String(n).split("").map(d=>SUPS[d]).join("");
+const subn=n=>String(n).split("").map(d=>SUBS_N[d]).join("");
+const pretty=f=>String(f).replace(/(\d+)/g,m=>subn(m));
+
+function aufbau(count){const out=[];let left=count;
+  for(const[n,l]of ORDER){if(left<=0)break;const k=Math.min(CAP[l],left);out.push([n,l,k]);left-=k;}
+  return out;}
+function shellsFromSub(sub){const m=[];for(const[n,,k]of sub)m[n-1]=(m[n-1]||0)+k;
+  for(let i=0;i<m.length;i++)if(!m[i])m[i]=0;return m;}
+function shellsFor(z,e){if(e===z&&SHELL_EXC[z])return SHELL_EXC[z].slice();return shellsFromSub(aufbau(e));}
+function configOf(e,short){
+  const sub=aufbau(e),NOBLE=[[2,"He"],[10,"Ne"],[18,"Ar"],[36,"Kr"],[54,"Xe"],[86,"Rn"]];
+  let start=0,pre="";
+  if(short)for(let i=NOBLE.length-1;i>=0;i--){
+    if(e>NOBLE[i][0]){pre="["+NOBLE[i][1]+"] ";let acc=0;
+      for(let j=0;j<sub.length;j++){acc+=sub[j][2];if(acc===NOBLE[i][0]){start=j+1;break;}}break;}}
+  return pre+sub.slice(start).map(([n,l,k])=>n+l+sup(k)).join(" ");
+}
+function gridPos(z){
+  if(z===1)return[1,1];if(z===2)return[18,1];
+  if(z<=4)return[z-2,2];if(z<=10)return[z+8,2];
+  if(z<=12)return[z-10,3];if(z<=18)return[z,3];
+  if(z<=36)return[z-18,4];if(z<=54)return[z-36,5];
+  if(z<=56)return[z-54,6];if(z<=71)return[z-54,9];
+  if(z<=86)return[z-68,6];if(z<=88)return[z-86,7];
+  if(z<=103)return[z-86,10];return[z-100,7];
+}
+const VAL_OVER={H:1,He:0,B:3,C:4,N:3,O:2,F:1,Ne:0,Al:3,Si:4,P:3,S:2,Cl:1,Ar:0,
+Fe:3,Cu:2,Zn:2,Ag:1,Au:1,Cr:3,Mn:2,Ni:2,Co:2,Ti:4,Sn:4,Pb:2,Se:2,As:3,Sb:3,Bi:3,Br:1,I:1,Kr:0,Xe:0};
+
+const ELS=RAW.map((line,i)=>{
+  const p=line.split("|"),z=i+1,[col,row]=gridPos(z);
+  const period=row<=7?row:(row===9?6:7), group=row<=7?col:3, cat=p[3];
+  const e={z,sym:p[0],name:p[1],mass:+p[2],cat,catName:CATS[cat][0],color:CATS[cat][1],
+    eneg:+p[4],radius:+p[5],note:p[6],col,row,period,group};
+  e.shells=shellsFor(z,z); e.config=configOf(z,true); e.configFull=configOf(z,false);
+  e.valence=VAL_OVER[e.sym]!=null?VAL_OVER[e.sym]
+    :group===1?1:group===2?2:group===18?0:(group>=13&&group<=17)?[3,4,3,2,1][group-13]:2;
+  e.cpk=CPK[e.sym]||e.color;
+  e.n0=Math.round(e.mass)-z;
+  return e;
+});
+const BY_SYM={}; ELS.forEach(e=>BY_SYM[e.sym]=e);
+
+/* ============================================================
+   STRUCTURES — connectivity only. Geometry is relaxed at runtime.
+   ============================================================ */
+function chain(syms){const b=[];for(let i=0;i<syms.length-1;i++)b.push([i,i+1,1]);return{atoms:syms,bonds:b};}
+const STRUCT={
+  "H2O":{atoms:["O","H","H"],bonds:[[0,1,1],[0,2,1]]},
+  "O2":{atoms:["O","O"],bonds:[[0,1,2]]},
+  "N2":{atoms:["N","N"],bonds:[[0,1,3]]},
+  "H2":{atoms:["H","H"],bonds:[[0,1,1]]},
+  "Ar":{atoms:["Ar"],bonds:[]},
+  "He":{atoms:["He"],bonds:[]},
+  "Ne":{atoms:["Ne"],bonds:[]},
+  "CO2":{atoms:["C","O","O"],bonds:[[0,1,2],[0,2,2]]},
+  "CO":{atoms:["C","O"],bonds:[[0,1,3]]},
+  "CH4":{atoms:["C","H","H","H","H"],bonds:[[0,1,1],[0,2,1],[0,3,1],[0,4,1]]},
+  "NH3":{atoms:["N","H","H","H"],bonds:[[0,1,1],[0,2,1],[0,3,1]]},
+  "HCl":{atoms:["H","Cl"],bonds:[[0,1,1]]},
+  "SO2":{atoms:["S","O","O"],bonds:[[0,1,2],[0,2,2]]},
+  "O3":{atoms:["O","O","O"],bonds:[[0,1,2],[0,2,1]]},
+  "H2O2":{atoms:["O","O","H","H"],bonds:[[0,1,1],[0,2,1],[1,3,1]]},
+  "CH2O":{atoms:["C","O","H","H"],bonds:[[0,1,2],[0,2,1],[0,3,1]]},
+  "H2SO4":{atoms:["S","O","O","O","O","H","H"],
+    bonds:[[0,1,2],[0,2,2],[0,3,1],[0,4,1],[3,5,1],[4,6,1]]},
+  "C2H6O":{atoms:["C","C","O","H","H","H","H","H","H"],
+    bonds:[[0,1,1],[1,2,1],[0,3,1],[0,4,1],[0,5,1],[1,6,1],[1,7,1],[2,8,1]]},
+  "C6H6":{atoms:["C","C","C","C","C","C","H","H","H","H","H","H"],
+    bonds:[[0,1,2],[1,2,1],[2,3,2],[3,4,1],[4,5,2],[5,0,1],
+           [0,6,1],[1,7,1],[2,8,1],[3,9,1],[4,10,1],[5,11,1]]},
+  /* citric acid: HOOC-CH2-C(OH)(COOH)-CH2-COOH */
+  "C6H8O7":{atoms:["C","C","C","C","C","C","O","O","O","O","O","O","O",
+                   "H","H","H","H","H","H","H","H"],
+    bonds:[[0,6,2],[0,7,1],[7,13,1],[0,1,1],
+           [1,14,1],[1,15,1],[1,2,1],
+           [2,8,1],[8,16,1],[2,3,1],[2,4,1],
+           [3,9,2],[3,10,1],[10,17,1],
+           [4,18,1],[4,19,1],[4,5,1],
+           [5,11,2],[5,12,1],[12,20,1]]},
+  /* glucose, open-chain aldehyde form */
+  "C6H12O6":{atoms:["C","C","C","C","C","C","O","O","O","O","O","O",
+                    "H","H","H","H","H","H","H","H","H","H","H","H"],
+    bonds:[[0,6,2],[0,12,1],[0,1,1],
+           [1,7,1],[7,13,1],[1,14,1],[1,2,1],
+           [2,8,1],[8,15,1],[2,16,1],[2,3,1],
+           [3,9,1],[9,17,1],[3,18,1],[3,4,1],
+           [4,10,1],[10,19,1],[4,20,1],[4,5,1],
+           [5,11,1],[11,21,1],[5,22,1],[5,23,1]]}
+};
+/* paraffin wax — a 25-carbon chain, generated */
+(function(){const a=[],b=[];
+  for(let i=0;i<25;i++){a.push("C"); if(i)b.push([i-1,i,1]);}
+  for(let i=0;i<25;i++){const n=(i===0||i===24)?3:2;
+    for(let k=0;k<n;k++){a.push("H");b.push([i,a.length-1,1]);}}
+  STRUCT["C25H52"]={atoms:a,bonds:b};
+})();
+
+const KIND={
+  molecular:["Molecular","Separate molecules, held to each other only loosely.","#6C7BFF"],
+  ionic:["Ionic lattice","Charged ions locked in a repeating grid. No molecules at all.","#FFB43C"],
+  metallic:["Metallic lattice","Positive cores in a shared sea of loose electrons.","#46E0B0"],
+  network:["Covalent network","One giant molecule — every atom bonded into the whole crystal.","#FF4D9D"]
+};
+const SUBST={
+  "H2O":{name:"Water",kind:"molecular",shape:"Bent, 104.5°",
+    note:"The bend is why water is polar — and why it dissolves so much of the world."},
+  "C6H8O7":{name:"Citric acid",kind:"molecular",shape:"Branched chain",
+    note:"Three acid groups on one small skeleton. That is the whole of the sour taste."},
+  "C6H12O6":{name:"Glucose",kind:"molecular",shape:"Six-carbon chain",
+    note:"Drawn open here. In water it mostly curls into a ring."},
+  "C6H8O6":{name:"Vitamin C",kind:"molecular",shape:"Five-membered ring",
+    note:"Humans are one of the few animals that cannot make their own."},
+  "N2":{name:"Nitrogen",kind:"molecular",shape:"Linear",
+    note:"A triple bond so strong that almost nothing in the air can break it."},
+  "O2":{name:"Oxygen",kind:"molecular",shape:"Linear",
+    note:"The double bond your cells prise apart to get energy."},
+  "Ar":{name:"Argon",kind:"molecular",shape:"Single atom",
+    note:"A full outer shell. It bonds to nothing, so it drifts around alone."},
+  "CO2":{name:"Carbon dioxide",kind:"molecular",shape:"Linear",
+    note:"Polar bonds, but they point exactly opposite, so the molecule is not."},
+  "C25H52":{name:"Paraffin wax",kind:"molecular",shape:"Long chain",
+    note:"A 25-carbon chain. The wick melts it, and the flame burns the vapour."},
+  "NaCl":{name:"Sodium chloride",kind:"ionic",shape:"Rock-salt cubic",lat:["Na","Cl"],
+    note:"No such thing as one salt molecule — just ions alternating forever."},
+  "CaCO3":{name:"Calcium carbonate",kind:"ionic",shape:"Trigonal \u2014 shown simplified",lat:["Ca","O"],
+    note:"Chalk, limestone, marble and seashells are all this."},
+  "Fe":{name:"Iron",kind:"metallic",shape:"Body-centred cubic",lat:["Fe","Fe"],
+    note:"Its loose electrons carry both the current and the shine."},
+  "Cu":{name:"Copper",kind:"metallic",shape:"Face-centred cubic",lat:["Cu","Cu"],
+    note:"One free electron per atom — that is what makes it such a good wire."},
+  "C":{name:"Carbon (graphite)",kind:"network",shape:"Stacked hexagon sheets",lat:["C","C"],
+    note:"Sheets slide over each other. That sliding is the mark left on paper."},
+  "Cdia":{name:"Carbon (diamond)",kind:"network",shape:"Tetrahedral network",lat:["C","C"],
+    note:"Every atom bonded to four others. The whole stone is one molecule."},
+  "SiO2":{name:"Silicon dioxide",kind:"network",shape:"Tetrahedral network",lat:["Si","O"],
+    note:"Sand, quartz and window glass — the same atoms, ordered differently."}
+};
+
+const ICON=s=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+s+'</svg>';
+const SPECIMENS=[
+ {id:"water",label:"Glass of water",sub:"100% one molecule",c:"#6C7BFF",
+  icon:ICON('<path d="M7 3h10l-1.4 16.2A2 2 0 0 1 13.6 21h-3.2a2 2 0 0 1-2-1.8L7 3Z"/><path d="M7.6 10h8.8"/>'),
+  blurb:"The simplest thing you can scan, and the strangest. Three atoms, bent at an angle, and almost every property of the living world follows from that bend.",
+  parts:[["H2O",100]]},
+ {id:"lemon",label:"Lemon",sub:"water, acid, sugar",c:"#FFB43C",
+  icon:ICON('<ellipse cx="12" cy="12" rx="9" ry="7"/><path d="M12 5v14M3 12h18M6 7l12 10M18 7 6 17"/>'),
+  blurb:"Mostly water, with a few percent of citric acid doing all the talking. The sourness is one molecule shape landing on one receptor on your tongue.",
+  parts:[["H2O",88],["C6H8O7",6],["C6H12O6",4],["C6H8O6",0.5]]},
+ {id:"salt",label:"Table salt",sub:"an ionic crystal",c:"#C08CFF",
+  icon:ICON('<path d="M9 3h6l1 5H8l1-5Z"/><path d="M7 8h10l1 13H6L7 8Z"/><circle cx="11" cy="13" r=".6" fill="currentColor"/><circle cx="14" cy="16" r=".6" fill="currentColor"/>'),
+  blurb:"Two elements that would each hurt you, locked together into something you eat every day. A grain of it is one single crystal.",
+  parts:[["NaCl",100]]},
+ {id:"pencil",label:"Pencil tip",sub:"graphite and clay",c:"#46E0B0",
+  icon:ICON('<path d="m4 20 1.5-4.5L16 5a2.1 2.1 0 0 1 3 3L8.5 18.5 4 20Z"/><path d="m14.5 6.5 3 3"/>'),
+  blurb:"No lead in it at all. Sheets of carbon one atom thick, sliding off onto the paper as you write.",
+  parts:[["C",80],["SiO2",20]]},
+ {id:"wire",label:"Copper wire",sub:"a metal lattice",c:"#FF9E4F",
+  icon:ICON('<path d="M3 12h3M18 12h3"/><path d="M6 12c0-3 2-3 2 0s2 3 2 0 2-3 2 0 2 3 2 0 2-3 2 0"/>'),
+  blurb:"Atoms stacked in a grid, each one letting go of an electron. Those loose electrons are the electricity.",
+  parts:[["Cu",100]]},
+ {id:"chalk",label:"Stick of chalk",sub:"ancient sea creatures",c:"#FF8FC7",
+  icon:ICON('<rect x="8" y="3" width="8" height="18" rx="1.6"/><path d="M8 7h8"/>'),
+  blurb:"Compressed shells of plankton that died a hundred million years ago. Still carrying the calcium they pulled from the sea.",
+  parts:[["CaCO3",98],["H2O",2]]},
+ {id:"air",label:"The air here",sub:"a mixture of gases",c:"#5FC9E8",
+  icon:ICON('<path d="M3 8h11a3 3 0 1 0-3-3"/><path d="M3 12h15a3 3 0 1 1-3 3"/><path d="M3 16h8"/>'),
+  blurb:"Overwhelmingly nitrogen, which does almost nothing. The fifth of it that is oxygen is what keeps you alive.",
+  parts:[["N2",78],["O2",21],["Ar",0.9],["CO2",0.04]]},
+ {id:"sand",label:"Grain of sand",sub:"silicon and oxygen",c:"#E8D44D",
+  icon:ICON('<path d="M3 19c3-6 6-6 9 0M8 19c3-7 7-7 10 0"/><circle cx="6" cy="8" r="1"/><circle cx="12" cy="6" r="1"/><circle cx="18" cy="9" r="1"/>'),
+  blurb:"The same atoms as window glass and the same as a computer chip. What changes is only how they are arranged.",
+  parts:[["SiO2",100]]},
+ {id:"clip",label:"Steel paperclip",sub:"iron plus a little carbon",c:"#5FC9E8",
+  icon:ICON('<path d="M8 6v9a4 4 0 0 0 8 0V6.5a2.5 2.5 0 0 0-5 0V15"/>'),
+  blurb:"Iron on its own is soft. A sprinkle of carbon jams the layers so they cannot slide, and it becomes steel.",
+  parts:[["Fe",99],["C",1]]},
+ {id:"candle",label:"Candle",sub:"long carbon chains",c:"#FF4D9D",
+  icon:ICON('<path d="M12 3s2.5 2.6 2.5 4.4a2.5 2.5 0 0 1-5 0C9.5 5.6 12 3 12 3Z"/><rect x="8" y="10" width="8" height="11" rx="1.4"/>'),
+  blurb:"The flame never touches the wax. Heat melts it, the wick lifts it, and it burns as a vapour just above the surface.",
+  parts:[["C25H52",100]]}
+];
+
+/* ---- formula parsing + fallback structure for anything not in the library ---- */
+function parseFormula(f){
+  const out={}; const re=/([A-Z][a-z]?)(\d*)/g; let m,ok=false;
+  while((m=re.exec(String(f)))){
+    if(!m[0]) continue;
+    if(!BY_SYM[m[1]]) return null;
+    out[m[1]]=(out[m[1]]||0)+(m[2]?+m[2]:1); ok=true;
+  }
+  return ok?out:null;
+}
+function autoStructure(f){
+  const c=parseFormula(f); if(!c) return null;
+  const atoms=[],bonds=[];
+  const heavy=[]; Object.keys(c).forEach(s=>{ if(s!=="H") for(let i=0;i<c[s];i++) heavy.push(s); });
+  heavy.sort((a,b)=>(BY_SYM[b].valence-BY_SYM[a].valence)||a.localeCompare(b));
+  if(!heavy.length){ for(let i=0;i<(c.H||0);i++) atoms.push("H");
+    if(atoms.length===2) bonds.push([0,1,1]); return {atoms,bonds,auto:true}; }
+  const carbons=heavy.filter(s=>s==="C"), rest=heavy.filter(s=>s!=="C");
+  carbons.forEach(s=>atoms.push(s));
+  for(let i=1;i<carbons.length;i++) bonds.push([i-1,i,1]);
+  const used=()=>{const u=new Array(atoms.length).fill(0);
+    bonds.forEach(b=>{u[b[0]]+=b[2];u[b[1]]+=b[2];});return u;};
+  rest.forEach(s=>{
+    atoms.push(s); const me=atoms.length-1; const u=used();
+    let best=-1,bestFree=-1;
+    for(let i=0;i<me;i++){ const fr=BY_SYM[atoms[i]].valence-u[i];
+      if(fr>bestFree){bestFree=fr;best=i;} }
+    if(best>=0&&bestFree>0) bonds.push([best,me,1]);
+    else if(me>0) bonds.push([0,me,1]);
+  });
+  let hLeft=c.H||0; const u2=used();
+  for(let i=0;i<atoms.length&&hLeft>0;i++){
+    let free=BY_SYM[atoms[i]].valence-u2[i];
+    while(free>0&&hLeft>0){ atoms.push("H"); bonds.push([i,atoms.length-1,1]); free--; hLeft--; }
+  }
+  while(hLeft>0){ atoms.push("H"); bonds.push([0,atoms.length-1,1]); hLeft--; }
+  return {atoms,bonds,auto:true};
+}
+function structureFor(f){
+  if(STRUCT[f]) return STRUCT[f];
+  if(f==="C"&&SUBST.C) return null;
+  return autoStructure(f);
+}
+function formulaMass(f){
+  const c=parseFormula(f); if(!c) return 0;
+  return Object.keys(c).reduce((s,k)=>s+BY_SYM[k].mass*c[k],0);
+}
+function substanceOf(f){
+  if(SUBST[f]) return Object.assign({formula:f},SUBST[f]);
+  const c=parseFormula(f);
+  return {formula:f,name:f,kind:"molecular",shape:"Sketched from the formula",
+    note:c?"Not in the built-in library, so the shape below is a best-guess sketch from the formula, not the measured structure.":"Unrecognised formula.",auto:true};
+}
+
+/* ============================================================
+   APP CORE
+   ============================================================ */
+const $=id=>document.getElementById(id);
+const REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const SCALES=[
+  {id:"object",   nm:"Object",   sz:"10⁻¹ m",  c:"var(--na)"},
+  {id:"substance",nm:"Substance",sz:"10⁻³ m",  c:"var(--mint)"},
+  {id:"molecule", nm:"Structure",sz:"10⁻⁹ m",  c:"var(--h)"},
+  {id:"atom",     nm:"Atom",     sz:"10⁻¹⁰ m", c:"var(--mag)"},
+  {id:"nucleus",  nm:"Nucleus",  sz:"10⁻¹⁴ m", c:"var(--red)"},
+  {id:"quark",    nm:"Quark",    sz:"<10⁻¹⁸ m",c:"var(--na)"}
+];
+const S={scale:"object",specimen:null,substance:null,struct:null,layout:null,
+  element:null,nucleon:null,quark:null,electron:null,atomView:"shell",
+  nP:6,nN:6,nE:6,create:false,spin:0};
+
+function toast(msg){const p=$("pop");p.textContent=msg;p.classList.add("on");
+  clearTimeout(p._t);p._t=setTimeout(()=>p.classList.remove("on"),1900);}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const rowOf=(k,v,cls)=>"<dt>"+k+"</dt><dd"+(cls?' class="'+cls+'"':"")+">"+v+"</dd>";
+
+/* ---- which rungs are reachable right now ---- */
+function reachable(id){
+  switch(id){
+    case "object":return true;
+    case "substance":return !!S.specimen;
+    case "molecule":return !!S.substance;
+    case "atom":return !!S.element;
+    case "nucleus":return !!S.element;
+    case "quark":return !!S.nucleon;
+  }
+  return false;
+}
+function renderRail(){
+  const rail=$("rail"); rail.innerHTML="";
+  const cur=SCALES.findIndex(s=>s.id===S.scale);
+  SCALES.forEach((sc,i)=>{
+    const b=document.createElement("button");
+    b.className="rung"+(sc.id===S.scale?" live":(i<cur?" done":""));
+    b.style.setProperty("--c",sc.c);
+    b.disabled=!reachable(sc.id);
+    b.innerHTML='<span class="dot"></span><span class="nm">'+sc.nm+'</span><span class="sz">'+sc.sz+'</span>';
+    b.title=reachable(sc.id)?("Go to "+sc.nm):"Pick something at the level above first";
+    b.onclick=()=>go(sc.id);
+    rail.appendChild(b);
+  });
+}
+function renderCrumbs(){
+  const c=$("crumbs"); c.innerHTML="";
+  const path=[];
+  if(S.specimen) path.push(["object",S.specimen.label]);
+  if(S.substance) path.push(["substance",S.substance.name]);
+  if(S.substance&&(S.scale==="molecule"||S.element)) path.push(["molecule",pretty(S.substance.formula)]);
+  if(S.element) path.push(["atom",S.element.name]);
+  if(S.scale==="nucleus"||S.nucleon) path.push(["nucleus","nucleus"]);
+  if(S.nucleon&&S.scale==="quark") path.push(["quark",S.nucleon.type==="p"?"proton":"neutron"]);
+  path.forEach(([id,label],i)=>{
+    if(i){const s=document.createElement("span");s.className="sep";s.textContent="›";c.appendChild(s);}
+    const b=document.createElement("button");
+    b.textContent=label; if(id===S.scale)b.className="now";
+    b.onclick=()=>go(id); c.appendChild(b);
+  });
+}
+function go(id){
+  if(!reachable(id))return;
+  S.scale=id;
+  if(id==="object"){S.substance=null;S.element=null;S.nucleon=null;S.electron=null;}
+  if(id==="substance"){S.element=null;S.nucleon=null;S.electron=null;}
+  if(id==="molecule"){S.element=null;S.nucleon=null;S.electron=null;}
+  if(id==="atom"){S.nucleon=null;}
+  $("sc-scan").classList.toggle("live",id==="object"&&!S.specimen);
+  $("sc-view").classList.toggle("live",!(id==="object"&&!S.specimen));
+  renderRail();renderCrumbs();renderInspector();renderFoot();
+  if(R[id]&&R[id].enter)R[id].enter();
+}
+
+/* ============================================================
+   CANVAS
+   ============================================================ */
+const cv=$("cv"),ctx=cv.getContext("2d");
+let CW=0,CH=0;
+function fit(){const r=cv.getBoundingClientRect();const d=Math.min(2,window.devicePixelRatio||1);
+  CW=Math.max(1,r.width);CH=Math.max(1,r.height);
+  cv.width=Math.round(CW*d);cv.height=Math.round(CH*d);ctx.setTransform(d,0,0,d,0,0);
+  if(R[S.scale]&&R[S.scale].enter)R[S.scale].enter();}
+new ResizeObserver(fit).observe(cv);
+
+let HOT=[];          /* clickable things the current renderer published */
+let hover=null;
+function hitTest(x,y){
+  for(let i=HOT.length-1;i>=0;i--){const h=HOT[i];
+    if(Math.hypot(h.x-x,h.y-y)<=h.r+4)return h;}
+  return null;
+}
+function ptr(ev){const r=cv.getBoundingClientRect();return[ev.clientX-r.left,ev.clientY-r.top];}
+cv.addEventListener("pointermove",ev=>{const[x,y]=ptr(ev);
+  const h=hitTest(x,y); hover=h; cv.style.cursor=h?"pointer":"default";});
+cv.addEventListener("pointerleave",()=>{hover=null;});
+cv.addEventListener("pointerdown",ev=>{const[x,y]=ptr(ev);const h=hitTest(x,y);
+  if(h&&h.go)h.go();});
+
+/* shared paint helpers */
+const hx=c=>[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)];
+function shade(c,f){const[r,g,b]=hx(c);const m=v=>Math.max(0,Math.min(255,Math.round(v+(f<0?v*f:(255-v)*f))));
+  return "rgb("+m(r)+","+m(g)+","+m(b)+")";}
+const lum=c=>{const[r,g,b]=hx(c);return(.299*r+.587*g+.114*b)/255;};
+function sphere(x,y,r,col,label,labelScale){
+  if(!(r>0)||!isFinite(x)||!isFinite(y))return;
+  const g=ctx.createRadialGradient(x-r*.36,y-r*.42,r*.06,x,y,r);
+  g.addColorStop(0,"#FFFFFF");g.addColorStop(.26,col);g.addColorStop(1,shade(col,-.5));
+  ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle=g;
+  ctx.shadowColor="rgba(0,0,0,.6)";ctx.shadowBlur=r*.7;ctx.shadowOffsetY=r*.16;ctx.fill();
+  ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+  if(label){ctx.font='700 '+Math.max(9,r*(labelScale||.82))+'px "Archivo",system-ui,sans-serif';
+    ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillStyle=lum(col)>.58?"#0B0B12":"#FFFFFF";ctx.fillText(label,x,y+r*.03);}
+}
+function ring(x,y,r,col,w,dash){
+  if(!(r>0)||!isFinite(x)||!isFinite(y))return;
+  ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.strokeStyle=col;ctx.lineWidth=w||1;
+  if(dash)ctx.setLineDash(dash);ctx.stroke();ctx.setLineDash([]);
+}
+function bg(tint){
+  ctx.clearRect(0,0,CW,CH);
+  const g=ctx.createRadialGradient(CW/2,CH/2,0,CW/2,CH/2,Math.max(CW,CH)*.62);
+  g.addColorStop(0,tint+"1F");g.addColorStop(.6,tint+"09");g.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
+  ctx.strokeStyle="rgba(255,255,255,.028)";ctx.lineWidth=1;
+  for(let x=(CW/2)%42;x<CW;x+=42){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,CH);ctx.stroke();}
+  for(let y=(CH/2)%42;y<CH;y+=42){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(CW,y);ctx.stroke();}
+}
+const atomR=e=>9+Math.sqrt(e.radius)*1.15;
+
+/* ============================================================
+   LAYOUT — relax a connectivity graph into 2D
+   ============================================================ */
+function layoutMolecule(st){
+  const n=st.atoms.length,P=[];
+  for(let i=0;i<n;i++){const a=i*2.399963,r=Math.sqrt(i+1)*22;
+    P.push({x:Math.cos(a)*r,y:Math.sin(a)*r,vx:0,vy:0});}
+  const adj={};st.bonds.forEach(b=>{(adj[b[0]]=adj[b[0]]||[]).push(b[1]);(adj[b[1]]=adj[b[1]]||[]).push(b[0]);});
+  const bonded=new Set();st.bonds.forEach(b=>{bonded.add(b[0]+":"+b[1]);bonded.add(b[1]+":"+b[0]);});
+  const R2=i=>atomR(BY_SYM[st.atoms[i]]);
+  const iters=n>40?520:900;
+  for(let it=0;it<iters;it++){
+    for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){
+      const dx=P[j].x-P[i].x,dy=P[j].y-P[i].y,d=Math.hypot(dx,dy)||.01;
+      const bd=bonded.has(i+":"+j);
+      const sh=!bd&&adj[i]&&adj[i].some(k=>adj[j]&&adj[j].includes(k));
+      const want=bd?(R2(i)+R2(j))*1.36:sh?(R2(i)+R2(j))*2.25:(R2(i)+R2(j))*1.75;
+      if(bd||d<want){const f=(d-want)*(bd?.05:sh?.028:.05),ux=dx/d*f,uy=dy/d*f;
+        P[i].vx+=ux;P[i].vy+=uy;P[j].vx-=ux;P[j].vy-=uy;}
+    }
+    for(const p of P){p.x+=p.vx;p.y+=p.vy;p.vx*=.72;p.vy*=.72;}
+  }
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  P.forEach((p,i)=>{const r=R2(i);x0=Math.min(x0,p.x-r);y0=Math.min(y0,p.y-r);
+    x1=Math.max(x1,p.x+r);y1=Math.max(y1,p.y+r);});
+  return {P,w:x1-x0,h:y1-y0,cx:(x0+x1)/2,cy:(y0+y1)/2};
+}
+function ensureLayout(){
+  if(!S.struct){S.layout=null;return;}
+  if(S.layout&&S.layout.for===S.substance.formula)return;
+  const L=layoutMolecule(S.struct);L.for=S.substance.formula;S.layout=L;
+}
+
+/* ============================================================
+   RENDERER: MOLECULE / LATTICE
+   ============================================================ */
+const R={};
+R.molecule={
+  enter(){ensureLayout();},
+  draw(t){
+    const sb=S.substance;
+    bg(sb.kind==="ionic"?"#FFB43C":sb.kind==="metallic"?"#46E0B0":sb.kind==="network"?"#FF4D9D":"#6C7BFF");
+    HOT=[];
+    if(sb.kind!=="molecular"){drawLattice(t);return;}
+    ensureLayout(); const L=S.layout,st=S.struct;
+    if(!L)return;
+    const pad=Math.min(64,Math.min(CW,CH)*0.12);
+    const k=Math.max(0.10,Math.min((CW-pad*2)/Math.max(L.w,1),(CH-pad*2)/Math.max(L.h,1),1.55));
+    const ox=CW/2-L.cx*k,oy=CH/2-L.cy*k;
+    const px=i=>ox+L.P[i].x*k, py=i=>oy+L.P[i].y*k;
+    const breathe=REDUCED?0:Math.sin(t*.8)*.6;
+    /* bonds */
+    st.bonds.forEach(b=>{
+      const ax=px(b[0]),ay=py(b[0]),bx=px(b[1]),by=py(b[1]);
+      const dx=bx-ax,dy=by-ay,d=Math.hypot(dx,dy)||1,nx=-dy/d,ny=dx/d;
+      const offs=b[2]===1?[0]:b[2]===2?[-3.4,3.4]:[-5.6,0,5.6];
+      offs.forEach(o=>{ctx.beginPath();
+        ctx.moveTo(ax+nx*o,ay+ny*o);ctx.lineTo(bx+nx*o,by+ny*o);
+        ctx.strokeStyle="rgba(190,196,220,.85)";ctx.lineWidth=Math.max(2,3.1*k);
+        ctx.lineCap="round";ctx.stroke();});
+    });
+    /* atoms */
+    st.atoms.forEach((sym,i)=>{
+      const e=BY_SYM[sym],r=atomR(e)*k*(1+breathe*.006);
+      const x=px(i),y=py(i);
+      const hot=hover&&hover.kind==="atom"&&hover.i===i;
+      if(hot){ring(x,y,r+7,"#FFFFFF",1.6,[5,4]);}
+      sphere(x,y,r,e.cpk,r>11?sym:"",.8);
+      HOT.push({x,y,r,kind:"atom",i,sym,go:()=>openAtom(sym,i)});
+    });
+    /* label */
+    ctx.font='600 12px "JetBrains Mono",monospace';ctx.textAlign="center";
+    ctx.fillStyle="rgba(255,255,255,.34)";
+    ctx.fillText(st.atoms.length+" atoms  ·  "+st.bonds.length+" bonds",CW/2,CH-16);
+  }
+};
+function latticeMotif(sb){
+  if(sb.kind==="metallic")return "close";
+  if(sb.formula==="C")return "hex";
+  if(sb.formula==="Cdia")return "tetra";
+  if(sb.formula==="SiO2")return "silica";
+  return "square";
+}
+/* flat-top honeycomb: shared vertices deduped, each edge once */
+function honeycomb(W,H,w){
+  const nodes=[],idx={},edges=[],ek={};
+  const key=(x,y)=>Math.round(x*2)+"_"+Math.round(y*2);
+  const add=(x,y)=>{const k=key(x,y);if(idx[k]!=null)return idx[k];
+    idx[k]=nodes.length;nodes.push({x,y});return idx[k];};
+  const dx=1.5*w, dy=Math.sqrt(3)*w;
+  const qN=Math.ceil(W/dx)+2, rN=Math.ceil(H/dy)+2;
+  for(let q=-1;q<=qN;q++)for(let r=-1;r<=rN;r++){
+    const cx=dx*q, cy=dy*r+((q&1)?dy/2:0);
+    const v=[];
+    for(let k=0;k<6;k++){const ang=Math.PI/3*k;
+      v.push(add(cx+Math.cos(ang)*w,cy+Math.sin(ang)*w));}
+    for(let k=0;k<6;k++){const A=v[k],B=v[(k+1)%6];
+      const e=Math.min(A,B)+"-"+Math.max(A,B);
+      if(!ek[e]){ek[e]=1;edges.push([A,B]);}}
+  }
+  return {nodes,edges};
+}
+function closePacked(W,H,step){
+  const nodes=[],edges=[];
+  const dy=step*0.866, cols=Math.ceil(W/step)+2, rows=Math.ceil(H/dy)+2;
+  const grid=[];
+  for(let r=0;r<rows;r++){grid[r]=[];
+    for(let c=0;c<cols;c++){
+      const x=c*step+((r&1)?step/2:0), y=r*dy;
+      grid[r][c]=nodes.length;nodes.push({x,y});}}
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    if(c<cols-1)edges.push([grid[r][c],grid[r][c+1]]);
+    if(r<rows-1){
+      edges.push([grid[r][c],grid[r+1][c]]);
+      const d=(r&1)?1:-1, c2=c+d;
+      if(c2>=0&&c2<cols)edges.push([grid[r][c],grid[r+1][c2]]);}
+  }
+  return {nodes,edges};
+}
+function drawLattice(t){
+  const sb=S.substance,[aSym,bSym]=sb.lat||["C","C"];
+  const motif=latticeMotif(sb);
+  const metallic=sb.kind==="metallic", ionic=sb.kind==="ionic";
+  const wob=REDUCED?0:1.1;
+  const unit=Math.max(38,Math.min(CW,CH)/6.6);
+  let net, sym2=null;
+  if(motif==="close")net=closePacked(CW,CH,unit);
+  else if(motif==="square"){
+    const step=unit, cols=Math.ceil(CW/step)+2, rows=Math.ceil(CH/step)+2;
+    const ox=(CW-(cols-1)*step)/2, oy=(CH-(rows-1)*step)/2;
+    const nodes=[],edges=[],g=[];
+    for(let r=0;r<rows;r++){g[r]=[];for(let c=0;c<cols;c++){
+      g[r][c]=nodes.length;nodes.push({x:ox+c*step,y:oy+r*step,alt:(r+c)%2===0});}}
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      if(c<cols-1)edges.push([g[r][c],g[r][c+1]]);
+      if(r<rows-1)edges.push([g[r][c],g[r+1][c]]);}
+    net={nodes,edges};
+  } else net=honeycomb(CW,CH,unit*0.62);
+
+  /* bond / lattice lines */
+  ctx.strokeStyle=motif==="close"?"rgba(70,224,176,.20)"
+    :ionic?"rgba(255,180,60,.22)":"rgba(255,77,157,.30)";
+  ctx.lineWidth=motif==="close"?1.2:1.8;
+  net.edges.forEach(([i,j])=>{
+    const A=net.nodes[i],B=net.nodes[j];
+    ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.stroke();
+  });
+  /* diamond: the fourth bond leaves the page */
+  if(motif==="tetra"){
+    ctx.strokeStyle="rgba(255,77,157,.5)";ctx.lineWidth=2;
+    net.nodes.forEach((n,i)=>{if(i%2)return;
+      ctx.beginPath();ctx.moveTo(n.x,n.y);ctx.lineTo(n.x+unit*0.20,n.y-unit*0.20);ctx.stroke();});
+  }
+  /* free electron sea */
+  if(metallic&&!REDUCED){
+    for(let i=0;i<58;i++){
+      const sp=t*(24+((i*37)%26));
+      const x=((i*97+sp)%(CW+60))-30, y=((i*53)%CH)+Math.sin(t*1.6+i*1.7)*13;
+      ctx.beginPath();ctx.arc(x,y,2.1,0,7);
+      ctx.fillStyle="rgba(70,224,176,.75)";ctx.shadowColor="#46E0B0";ctx.shadowBlur=9;
+      ctx.fill();ctx.shadowBlur=0;
+    }
+  }
+  /* out-of-plane partners for diamond, drawn dim and small */
+  if(motif==="tetra"){
+    net.nodes.forEach((n,i)=>{if(i%2)return;
+      ctx.globalAlpha=.32;
+      sphere(n.x+unit*0.20,n.y-unit*0.20,unit*0.13,BY_SYM.C.cpk,"",1);
+      ctx.globalAlpha=1;});
+  }
+  net.nodes.forEach((n,i)=>{
+    let sym;
+    if(motif==="silica")sym=(i%3===0)?"Si":"O";
+    else if(motif==="square")sym=n.alt?aSym:bSym;
+    else sym=aSym;
+    const e=BY_SYM[sym]||BY_SYM.C;
+    const x=n.x+(REDUCED?0:Math.sin(t*1.2+i*.7)*wob);
+    const y=n.y+(REDUCED?0:Math.cos(t*1.1+i*.5)*wob);
+    const rad=(motif==="silica"&&sym==="O")?unit*0.15
+             :(motif==="square"&&!n.alt)?unit*0.20:unit*0.24;
+    const hot=hover&&hover.kind==="atom"&&hover.i===i;
+    if(hot)ring(x,y,rad+7,"#FFFFFF",1.6,[5,4]);
+    sphere(x,y,rad,e.cpk,rad>12?sym:"",.72);
+    if(ionic&&motif==="square"){
+      ctx.font='700 10px "Roboto Mono",monospace';ctx.textAlign="center";
+      ctx.fillStyle="rgba(255,255,255,.72)";
+      ctx.fillText(n.alt?"+":"\u2212",x+rad*.85,y-rad*.72);
+    }
+    HOT.push({x,y,r:rad,kind:"atom",i,sym,go:()=>openAtom(sym,i)});
+  });
+  const cap={close:"close-packed plane \u00b7 the green specks are the free electrons",
+    hex:"hexagonal sheets \u00b7 they slide over each other",
+    tetra:"tetrahedral \u00b7 the fourth bond points out of the page",
+    silica:"corner-sharing tetrahedra \u00b7 silicon joined through oxygen",
+    square:"ions alternating \u00b7 a simplified square slice"}[motif];
+  ctx.font='600 12px "Roboto Mono",monospace';ctx.textAlign="center";
+  ctx.fillStyle="rgba(255,255,255,.4)";
+  ctx.fillText(cap,CW/2,CH-16);
+}
+function openAtom(sym,i){
+  S.element=BY_SYM[sym];
+  S.nP=S.element.z;S.nN=S.element.n0;S.nE=S.element.z;
+  S.electron=null;S.nucleon=null;
+  go("atom");
+  toast("Zoomed into one "+S.element.name.toLowerCase()+" atom");
+}
+
+/* ============================================================
+   ELECTRON BOOKKEEPING
+   ============================================================ */
+function electronList(count){
+  const out=[];
+  aufbau(count).forEach(([n,l,k])=>{
+    const orbitals=CAP[l]/2;
+    for(let i=0;i<k;i++)
+      out.push({n,l,sub:n+l,inSub:i,orbital:i%orbitals,
+        spin:i<orbitals?"up":"down",idx:out.length});
+  });
+  return out;
+}
+const ORB_NAMES={s:["s"],p:["pₓ","pᵧ","pᵩ"],
+  d:["dₓᵧ","dᵧᵩ","dₓᵩ","dₓ²₋ᵧ²","dᵩ²"],
+  f:["f₁","f₂","f₃","f₄","f₅","f₆","f₇"]};
+function shellsOfList(list){const m=[];list.forEach(e=>m[e.n-1]=(m[e.n-1]||0)+1);
+  for(let i=0;i<m.length;i++)if(!m[i])m[i]=0;return m;}
+
+/* orbital cloud point set, cached per (electrons, view) */
+let CLOUD=null;
+function buildCloud(count){
+  const pts=[],list=electronList(count);
+  const byS={};list.forEach(e=>{byS[e.sub]=byS[e.sub]||{n:e.n,l:e.l,k:0};byS[e.sub].k++;});
+  Object.keys(byS).forEach(sub=>{
+    const {n,l,k}=byS[sub];
+    const base=n*n*13+10;
+    const N=Math.round(120+k*46);
+    for(let i=0;i<N;i++){
+      const u=(i*0.61803398875)%1, v=(i*0.38196601125+0.37)%1;
+      const th=v*Math.PI*2;
+      let w;
+      if(l==="s") w=1;
+      else if(l==="p") w=Math.abs(Math.cos(th));
+      else if(l==="d") w=Math.abs(Math.sin(2*th));
+      else w=Math.abs(Math.sin(3*th));
+      if(w<0.14) continue;
+      const rr=base*(0.55+u*0.85)*(0.45+0.55*w);
+      pts.push({r:rr,th,w,sub,n,l});
+    }
+  });
+  return pts;
+}
+
+/* ============================================================
+   RENDERER: ATOM
+   ============================================================ */
+R.atom={
+  enter(){CLOUD=null;},
+  draw(t){
+    const e=S.element; if(!e){bg("#FF4D9D");return;}
+    bg(e.color.length===7?e.color:"#FF4D9D");
+    HOT=[];
+    const cx=CW/2,cy=CH/2,base=Math.min(CW,CH);
+    const A=S.nP+S.nN, q=S.nP-S.nE;
+    const list=electronList(S.nE);
+    const shells=shellsOfList(list);
+    const nucR=Math.max(19,Math.min(base*0.125,15+Math.pow(Math.max(A,1),0.34)*4.6));
+
+    if(S.atomView==="cloud"){
+      if(!CLOUD||CLOUD.forE!==S.nE){CLOUD=buildCloud(S.nE);CLOUD.forE=S.nE;}
+      const maxR=Math.max(...CLOUD.map(p=>p.r),1);
+      const k=(base*0.40)/maxR;
+      const rot=REDUCED?0:t*0.16;
+      CLOUD.forEach((p,i)=>{
+        const th=p.th+rot*(p.n%2?1:-1)*0.5;
+        const jitter=REDUCED?0:Math.sin(t*1.4+i*0.7)*1.6;
+        const x=cx+Math.cos(th)*(p.r*k+jitter), y=cy+Math.sin(th)*(p.r*k+jitter);
+        const a=0.10+p.w*0.34;
+        ctx.beginPath();ctx.arc(x,y,1.5,0,7);
+        ctx.fillStyle="rgba(140,165,255,"+a.toFixed(3)+")";ctx.fill();
+      });
+      /* subshell key */
+      const keys=[...new Set(CLOUD.map(p=>p.sub))];
+      ctx.font='600 11px "JetBrains Mono",monospace';ctx.textAlign="left";
+      keys.forEach((s,i)=>{ctx.fillStyle="rgba(180,190,225,.62)";
+        ctx.fillText(s,18,CH-18-i*15);});
+      ctx.textAlign="center";ctx.fillStyle="rgba(255,255,255,.3)";
+      ctx.fillText("cross-section through the probability cloud",CW/2,CH-16);
+    } else {
+      /* ---------- shell model ---------- */
+      const live=shells.filter(x=>x>0).length;
+      const inner=nucR+44, outer=base*0.40;
+      const gap=live>1?(outer-inner)/(live-1):0;
+      let ri=0;
+      shells.forEach((n,si)=>{
+        if(!n)return;
+        const r=live===1?inner:inner+gap*ri; ri++;
+        ring(cx,cy,r,"rgba(255,255,255,.10)",1);
+        ring(cx,cy,r,"rgba(140,165,255,.16)",1,[2,7]);
+        /* shell label */
+        ctx.font='600 10px "JetBrains Mono",monospace';ctx.textAlign="right";
+        ctx.fillStyle="rgba(255,255,255,.42)";
+        ctx.fillText((SHELL_LETTER[si]||"?")+"  "+n,cx-r-9,cy+3.5);
+        const inShell=list.filter(x=>x.n===si+1);
+        const dir=si%2?-1:1, sp=(0.20-si*0.021)*dir*(REDUCED?0:1);
+        inShell.forEach((el,k)=>{
+          const ang=t*sp+k*(Math.PI*2/inShell.length)+si*0.8;
+          const x=cx+Math.cos(ang)*r, y=cy+Math.sin(ang)*r;
+          const sel=S.electron&&S.electron.idx===el.idx;
+          const hot=hover&&hover.kind==="e"&&hover.idx===el.idx;
+          /* motion trail */
+          ctx.beginPath();
+          ctx.arc(cx,cy,r,ang-0.34*dir,ang,dir<0);
+          ctx.strokeStyle="rgba(124,150,255,.42)";ctx.lineWidth=2;ctx.stroke();
+          const rr=sel?7:hot?6:4.6;
+          ctx.beginPath();ctx.arc(x,y,rr+5,0,7);
+          ctx.fillStyle=sel?"rgba(108,123,255,.38)":"rgba(108,123,255,.16)";ctx.fill();
+          ctx.beginPath();ctx.arc(x,y,rr,0,7);
+          ctx.fillStyle=sel?"#FFFFFF":"#DCE3FF";
+          ctx.shadowColor="#6C7BFF";ctx.shadowBlur=sel?20:12;ctx.fill();ctx.shadowBlur=0;
+          if(sel||hot){
+            ring(x,y,rr+9,"#FFFFFF",1.4,[4,4]);
+            ctx.font='700 10px "JetBrains Mono",monospace';ctx.textAlign="center";
+            ctx.fillStyle="#FFFFFF";
+            ctx.fillText(el.sub+(el.spin==="up"?" ↑":" ↓"),x,y-rr-14);
+          }
+          HOT.push({x,y,r:rr+7,kind:"e",idx:el.idx,
+            go:()=>{S.electron=el;renderInspector();toast("Electron "+(el.idx+1)+" of "+S.nE+" · "+el.sub+" orbital");}});
+        });
+      });
+      if(!list.length){
+        ctx.font='500 12px "JetBrains Mono",monospace';ctx.textAlign="center";
+        ctx.fillStyle="rgba(255,255,255,.4)";
+        ctx.fillText("no electrons — a bare nucleus",cx,cy+nucR+38);
+      }
+    }
+
+    /* ---------- nucleus (always) ---------- */
+    const halo=ctx.createRadialGradient(cx,cy,nucR*.3,cx,cy,nucR*2.6);
+    halo.addColorStop(0,"rgba(255,94,107,.30)");halo.addColorStop(1,"rgba(255,94,107,0)");
+    ctx.fillStyle=halo;ctx.beginPath();ctx.arc(cx,cy,nucR*2.6,0,7);ctx.fill();
+    const nucHot=hover&&hover.kind==="nuc";
+    if(nucHot)ring(cx,cy,nucR+10,"#FFFFFF",1.6,[5,4]);
+    const grd=ctx.createRadialGradient(cx-nucR*.34,cy-nucR*.4,nucR*.08,cx,cy,nucR);
+    grd.addColorStop(0,"#FFD9DD");grd.addColorStop(.32,"#FF6E7C");grd.addColorStop(1,"#8E2033");
+    ctx.beginPath();ctx.arc(cx,cy,nucR,0,7);ctx.fillStyle=grd;ctx.fill();
+    ctx.font='700 '+Math.max(10,nucR*.52)+'px "JetBrains Mono",monospace';
+    ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillStyle="rgba(255,255,255,.95)";ctx.fillText(A||"0",cx,cy);
+    HOT.push({x:cx,y:cy,r:nucR,kind:"nuc",go:()=>{go("nucleus");toast("Inside the nucleus — "+S.nP+" protons, "+S.nN+" neutrons");}});
+
+    /* charge badge */
+    if(q!==0){
+      ctx.font='700 13px "JetBrains Mono",monospace';ctx.textAlign="center";
+      ctx.fillStyle=q>0?"#FF5E6B":"#6C7BFF";
+      ctx.fillText((q>0?"+":"−")+Math.abs(q),cx+nucR+22,cy-nucR-8);
+    }
+  }
+};
+
+/* ============================================================
+   RENDERER: OBJECT  (what the scanned thing is made of)
+   ============================================================ */
+R.object={
+  enter(){},
+  draw(t){
+    bg(S.specimen&&S.specimen.c?S.specimen.c:"#FFB43C");
+    HOT=[];
+    const sp=S.specimen; if(!sp)return;
+    const parts=sp.parts, n=parts.length;
+    const cx=CW/2,cy=CH/2,base=Math.min(CW,CH);
+    const total=parts.reduce((s,p)=>s+p[1],0)||1;
+    parts.forEach(([f,pct],i)=>{
+      const sb=substanceOf(f);
+      const frac=pct/total;
+      const rad=Math.max(28,Math.min(base*0.30,base*0.09+Math.sqrt(frac)*base*0.25));
+      let x,y;
+      if(n===1){x=cx;y=cy;}
+      else{const a=i/n*Math.PI*2-Math.PI/2+(REDUCED?0:t*0.13);
+        const orb=base*0.27;
+        x=cx+Math.cos(a)*orb;y=cy+Math.sin(a)*orb*0.78;}
+      const col=KIND[sb.kind][2];
+      const hot=hover&&hover.kind==="part"&&hover.i===i;
+      const g=ctx.createRadialGradient(x-rad*.3,y-rad*.35,rad*.1,x,y,rad);
+      g.addColorStop(0,col+"55");g.addColorStop(.7,col+"1E");g.addColorStop(1,col+"08");
+      ctx.beginPath();ctx.arc(x,y,rad,0,7);ctx.fillStyle=g;ctx.fill();
+      ring(x,y,rad,hot?"#FFFFFF":col+"99",hot?2:1.4);
+      ctx.beginPath();ctx.arc(x,y,rad,-Math.PI/2,-Math.PI/2+Math.PI*2*frac);
+      ctx.strokeStyle=col;ctx.lineWidth=3.4;ctx.lineCap="round";ctx.stroke();
+      ctx.textAlign="center";ctx.textBaseline="middle";
+      ctx.font='600 '+Math.max(13,rad*.30)+'px "Fraunces",Georgia,serif';
+      ctx.fillStyle="#F3F2F7";ctx.fillText(sb.name,x,y-rad*.12);
+      ctx.font='500 '+Math.max(10,rad*.20)+'px "JetBrains Mono",monospace';
+      ctx.fillStyle=col;ctx.fillText(pretty(f),x,y+rad*.16);
+      ctx.font='500 '+Math.max(9,rad*.16)+'px "JetBrains Mono",monospace';
+      ctx.fillStyle="rgba(255,255,255,.5)";
+      ctx.fillText((pct<1?pct:Math.round(pct))+"%",x,y+rad*.42);
+      HOT.push({x,y,r:rad,kind:"part",i,go:()=>openSubstance(f)});
+    });
+    ctx.font='600 12px "JetBrains Mono",monospace';ctx.textAlign="center";
+    ctx.fillStyle="rgba(255,255,255,.34)";
+    ctx.fillText("tap a substance to go inside it",CW/2,CH-16);
+  }
+};
+function openSubstance(f){
+  S.substance=substanceOf(f);
+  S.struct=structureFor(f);
+  S.layout=null;S.element=null;S.electron=null;S.nucleon=null;
+  go("substance");
+}
+
+/* ============================================================
+   RENDERER: SUBSTANCE  (many of them, together)
+   ============================================================ */
+R.substance={
+  enter(){ensureLayout();
+    const st=S.struct;
+    const cnt=st?Math.max(3,Math.min(16,Math.round(260/Math.max(st.atoms.length,1)))):0;
+    S.bulk=[];
+    for(let i=0;i<cnt;i++){
+      const a=i*2.399963;
+      S.bulk.push({x:(0.5+Math.cos(a)*0.34*Math.sqrt((i+1)/cnt)),
+                   y:(0.5+Math.sin(a)*0.34*Math.sqrt((i+1)/cnt)),
+                   ph:i*1.37,sp:0.5+((i*37)%50)/100});
+    }
+  },
+  draw(t){
+    const sb=S.substance;
+    bg(KIND[sb.kind][2]);
+    HOT=[];
+    if(sb.kind!=="molecular"){drawLattice(t);
+      ctx.font='600 12px "JetBrains Mono",monospace';ctx.textAlign="center";
+      ctx.fillStyle="rgba(255,255,255,.34)";
+      ctx.fillText("tap any atom to go inside it",CW/2,CH-32);
+      return;}
+    ensureLayout();const L=S.layout,st=S.struct;if(!L)return;
+    const k=Math.min(CW,CH)/Math.max(L.w,L.h,1)*0.19;
+    (S.bulk||[]).forEach((m,mi)=>{
+      const drift=REDUCED?0:1;
+      const x0=m.x*CW+Math.sin(t*0.36*m.sp+m.ph)*18*drift;
+      const y0=m.y*CH+Math.cos(t*0.31*m.sp+m.ph*1.4)*15*drift;
+      const rot=REDUCED?0:t*0.14*(mi%2?1:-1)+m.ph;
+      const co=Math.cos(rot),si=Math.sin(rot);
+      st.bonds.forEach(b=>{
+        const p=L.P[b[0]],q=L.P[b[1]];
+        const ax=x0+((p.x-L.cx)*co-(p.y-L.cy)*si)*k, ay=y0+((p.x-L.cx)*si+(p.y-L.cy)*co)*k;
+        const bx=x0+((q.x-L.cx)*co-(q.y-L.cy)*si)*k, by=y0+((q.x-L.cx)*si+(q.y-L.cy)*co)*k;
+        ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
+        ctx.strokeStyle="rgba(190,196,220,.5)";ctx.lineWidth=Math.max(1,2.6*k);ctx.stroke();
+      });
+      let mx=0,my=0;
+      st.atoms.forEach((sym,i)=>{
+        const p=L.P[i],e=BY_SYM[sym];
+        const x=x0+((p.x-L.cx)*co-(p.y-L.cy)*si)*k, y=y0+((p.x-L.cx)*si+(p.y-L.cy)*co)*k;
+        mx+=x;my+=y;
+        sphere(x,y,Math.max(2.4,atomR(e)*k),e.cpk,"",1);
+      });
+      mx/=st.atoms.length;my/=st.atoms.length;
+      const hot=hover&&hover.kind==="mol"&&hover.i===mi;
+      const rr=Math.max(L.w,L.h)*k*0.6+8;
+      if(hot)ring(mx,my,rr,"#FFFFFF",1.5,[5,4]);
+      HOT.push({x:mx,y:my,r:rr,kind:"mol",i:mi,go:()=>{go("molecule");toast("One "+sb.name.toLowerCase()+" molecule");}});
+    });
+    ctx.font='600 12px "JetBrains Mono",monospace';ctx.textAlign="center";
+    ctx.fillStyle="rgba(255,255,255,.34)";
+    ctx.fillText("tap one molecule to isolate it",CW/2,CH-16);
+  }
+};
+
+/* ============================================================
+   RENDERER: NUCLEUS
+   ============================================================ */
+const PACK=[];for(let i=0;i<420;i++){const a=i*2.399963,r=Math.sqrt(i)*0.62;
+  PACK.push([Math.cos(a)*r,Math.sin(a)*r,(i*0.7919)%1]);}
+function stability(z,n){
+  if(z<1)return{label:"No nucleus",tone:"#7C879F",lvl:4,note:"Add a proton and it becomes an element."};
+  const e=ELS[Math.min(z,118)-1],d=n-(e?e.n0:n);
+  if(z>82)return{label:"Radioactive",tone:"#FFB43C",lvl:Math.abs(d)<=3?2:3,
+    note:"Everything heavier than bismuth decays. This one too."};
+  const a=Math.abs(d);
+  if(a===0)return{label:"Most abundant",tone:"#46E0B0",lvl:0,note:"The version you would actually find in nature."};
+  if(a<=1)return{label:"Stable",tone:"#46E0B0",lvl:0,note:"Sits inside the band of stability."};
+  if(a<=3)return{label:"Near the band",tone:"#9BE870",lvl:1,note:"Mildly unstable, with a long half-life."};
+  if(a<=6)return{label:"Radioactive",tone:"#FFB43C",lvl:2,note:(d>0?"Neutron-rich":"Proton-rich")+", so it beta-decays."};
+  if(a<=12)return{label:"Highly unstable",tone:"#FF9E4F",lvl:3,note:"Would fall apart in a fraction of a second."};
+  return{label:"Would not hold",tone:"#FF5E6B",lvl:4,note:"Far outside any nucleus ever observed."};
+}
+R.nucleus={
+  enter(){},
+  draw(t){
+    bg("#FF5E6B");HOT=[];
+    const cx=CW/2,cy=CH/2,A=S.nP+S.nN;
+    if(!A){ctx.font='500 13px "JetBrains Mono",monospace';ctx.textAlign="center";
+      ctx.fillStyle="rgba(255,255,255,.45)";ctx.fillText("nothing here",cx,cy);return;}
+    const st=stability(S.nP,S.nN);
+    const spread=Math.min(Math.min(CW,CH)*0.34,26+Math.pow(A,0.42)*13);
+    const rr=Math.max(7,Math.min(30,spread/Math.pow(A,0.44)*1.9));
+    const shake=(st.lvl*0.42)*(REDUCED?0:1);
+    const pos=[];
+    for(let i=0;i<A;i++){
+      const[sx,sy,ph]=PACK[i%PACK.length];
+      const wob=Math.sin(t*(1.5+ph)+ph*9)*shake;
+      pos.push([cx+sx*spread+Math.cos(t*0.8+ph*7)*wob, cy+sy*spread+Math.sin(t*1.0+ph*5)*wob, ph]);
+    }
+    /* strong-force links between close neighbours */
+    ctx.strokeStyle="rgba(255,255,255,.07)";ctx.lineWidth=1;
+    for(let i=0;i<A;i++)for(let j=i+1;j<A;j++){
+      const d=Math.hypot(pos[i][0]-pos[j][0],pos[i][1]-pos[j][1]);
+      if(d<rr*2.45){ctx.beginPath();ctx.moveTo(pos[i][0],pos[i][1]);ctx.lineTo(pos[j][0],pos[j][1]);ctx.stroke();}
+    }
+    for(let i=0;i<A;i++){
+      const isP=i<S.nP,[x,y]=pos[i];
+      const sel=S.nucleon&&S.nucleon.i===i;
+      const hot=hover&&hover.kind==="nucleon"&&hover.i===i;
+      if(sel||hot)ring(x,y,rr+6,"#FFFFFF",1.5,[4,4]);
+      sphere(x,y,rr,isP?"#FF6E7C":"#9AA6C8",rr>11?(isP?"p":"n"):"",.9);
+      HOT.push({x,y,r:rr,kind:"nucleon",i,
+        go:()=>{S.nucleon={type:isP?"p":"n",i};go("quark");
+          toast("Inside one "+(isP?"proton":"neutron")+" — three quarks");}});
+    }
+    ctx.font='600 12px "JetBrains Mono",monospace';ctx.textAlign="center";
+    ctx.fillStyle="rgba(255,255,255,.34)";
+    ctx.fillText(S.nP+" protons · "+S.nN+" neutrons · tap one to go inside",CW/2,CH-16);
+  }
+};
+
+/* ============================================================
+   RENDERER: QUARK  (inside one nucleon)
+   ============================================================ */
+const QUARKS={
+  u:{name:"Up quark",sym:"u",q:"+2/3",mass:"2.2 MeV/c²",col:"#FF9E4F",
+     note:"One of the two quarks that build every atom you have ever touched."},
+  d:{name:"Down quark",sym:"d",q:"−1/3",mass:"4.7 MeV/c²",col:"#6C7BFF",
+     note:"Slightly heavier than the up quark. That tiny difference is why neutrons decay and protons do not."}
+};
+const COLORC={r:"#FF5E6B",g:"#46E0B0",b:"#6C7BFF"};
+R.quark={
+  enter(){},
+  draw(t){
+    bg("#FFB43C");HOT=[];
+    const nu=S.nucleon;if(!nu)return;
+    const flav=nu.type==="p"?["u","u","d"]:["u","d","d"];
+    const cols=["r","g","b"];
+    const cx=CW/2,cy=CH/2,base=Math.min(CW,CH);
+    const R0=base*0.20, qr=Math.max(20,base*0.072);
+
+    /* confinement bag */
+    const bagR=R0+qr*1.9;
+    const bagG=ctx.createRadialGradient(cx,cy,bagR*.3,cx,cy,bagR);
+    bagG.addColorStop(0,"rgba(255,180,60,.05)");bagG.addColorStop(.82,"rgba(255,180,60,.11)");
+    bagG.addColorStop(1,"rgba(255,180,60,0)");
+    ctx.fillStyle=bagG;ctx.beginPath();ctx.arc(cx,cy,bagR,0,7);ctx.fill();
+    ring(cx,cy,bagR,"rgba(255,180,60,.30)",1.4,[7,7]);
+
+    const P=flav.map((f,i)=>{
+      const a=i/3*Math.PI*2-Math.PI/2+(REDUCED?0:t*0.35);
+      const wob=REDUCED?0:Math.sin(t*2.3+i*2.1)*7;
+      return[cx+Math.cos(a)*(R0+wob),cy+Math.sin(a)*(R0+wob)];
+    });
+    /* gluon flux tubes */
+    for(let i=0;i<3;i++){
+      const j=(i+1)%3,[ax,ay]=P[i],[bx,by]=P[j];
+      const mx=(ax+bx)/2,my=(ay+by)/2;
+      const bend=Math.sin(t*2.6+i*2)*11*(REDUCED?0:1);
+      const nx=-(by-ay),ny=bx-ax,nl=Math.hypot(nx,ny)||1;
+      ctx.beginPath();ctx.moveTo(ax,ay);
+      ctx.quadraticCurveTo(mx+nx/nl*bend-(mx-cx)*0.22,my+ny/nl*bend-(my-cy)*0.22,bx,by);
+      const grd=ctx.createLinearGradient(ax,ay,bx,by);
+      grd.addColorStop(0,COLORC[cols[i]]);grd.addColorStop(1,COLORC[cols[j]]);
+      ctx.strokeStyle=grd;ctx.lineWidth=3.2;ctx.globalAlpha=.55;ctx.stroke();ctx.globalAlpha=1;
+      for(let k=0;k<4;k++){
+        const u=((t*0.45+k*0.25+i*0.17)%1);
+        const px2=ax+(bx-ax)*u, py2=ay+(by-ay)*u;
+        ctx.beginPath();ctx.arc(px2,py2,2.1,0,7);
+        ctx.fillStyle="rgba(255,255,255,.7)";ctx.fill();
+      }
+    }
+    /* sea pairs flickering in and out */
+    if(!REDUCED)for(let i=0;i<10;i++){
+      const ph=i*2.1, life=(Math.sin(t*1.7+ph)+1)/2;
+      if(life<0.55)continue;
+      const a=ph+t*0.2, rr2=R0*0.55+((i*29)%40);
+      const x=cx+Math.cos(a)*rr2, y=cy+Math.sin(a)*rr2;
+      ctx.beginPath();ctx.arc(x,y,1.9,0,7);
+      ctx.fillStyle="rgba(255,255,255,"+((life-0.55)*0.6).toFixed(2)+")";ctx.fill();
+    }
+    flav.forEach((f,i)=>{
+      const Q=QUARKS[f],[x,y]=P[i];
+      const sel=S.quark&&S.quark.i===i;
+      const hot=hover&&hover.kind==="q"&&hover.i===i;
+      if(sel||hot)ring(x,y,qr+9,"#FFFFFF",1.6,[5,4]);
+      ring(x,y,qr+4,COLORC[cols[i]],2);
+      sphere(x,y,qr,Q.col,Q.sym,1.05);
+      ctx.font='700 10px "JetBrains Mono",monospace';ctx.textAlign="center";
+      ctx.fillStyle=COLORC[cols[i]];ctx.fillText(Q.q,x,y+qr+16);
+      HOT.push({x,y,r:qr+6,kind:"q",i,
+        go:()=>{S.quark={i,f,color:cols[i]};renderInspector();toast(Q.name+" · charge "+Q.q);}});
+    });
+    ctx.font='600 12px "JetBrains Mono",monospace';ctx.textAlign="center";
+    ctx.fillStyle="rgba(255,255,255,.34)";
+    const sum=nu.type==="p"?"+2/3 +2/3 −1/3 = +1":"+2/3 −1/3 −1/3 = 0";
+    ctx.fillText(sum,CW/2,CH-16);
+  }
+};
+
+/* ============================================================
+   INSPECTOR
+   ============================================================ */
+function renderInspector(){
+  const I=$("insp");
+  if(S.create){I.innerHTML=createPanel();wireCreate();return;}
+  let h="";
+  switch(S.scale){
+    case "object":    h=panelObject();break;
+    case "substance": h=panelSubstance();break;
+    case "molecule":  h=panelMolecule();break;
+    case "atom":      h=panelAtom();break;
+    case "nucleus":   h=panelNucleus();break;
+    case "quark":     h=panelQuark();break;
+  }
+  I.innerHTML=h; wirePanel();
+}
+function panelObject(){
+  const sp=S.specimen;
+  if(!sp)return '<div class="blk"><p class="kicker">Nothing scanned</p>'+
+    '<p class="muted">Scan something with the camera, drop in a photo, or pick one of the specimens.</p></div>';
+  const total=sp.parts.reduce((s,p)=>s+p[1],0)||1;
+  let h='<div class="blk"><p class="kicker">'+(sp.source==="lens"?"Identified by Lens":"Specimen")+'</p>'+
+    '<h2 class="title-xl">'+esc(sp.label)+'</h2>'+
+    '<p class="lede">'+esc(sp.blurb)+'</p></div>'+
+    '<div class="blk"><p class="kicker">What it is made of</p><div class="stack">';
+  sp.parts.forEach(([f,pct],i)=>{
+    const sb=substanceOf(f),col=KIND[sb.kind][2];
+    h+='<button class="card" style="--c:'+col+'" data-sub="'+esc(f)+'">'+
+       '<div class="swatch">'+esc(sb.formula.replace(/[0-9]/g,"").slice(0,2))+'</div>'+
+       '<div class="cbody"><div class="cname">'+esc(sb.name)+'</div>'+
+       '<div class="cmeta">'+pretty(f)+' · '+KIND[sb.kind][0].toLowerCase()+'</div>'+
+       '<div class="meter"><i style="width:'+(pct/total*100).toFixed(1)+'%"></i></div></div>'+
+       '<div class="pct">'+(pct<1?pct:Math.round(pct))+'%</div></button>';
+  });
+  return h+'</div></div>';
+}
+function panelSubstance(){
+  const sb=S.substance,col=KIND[sb.kind][2],st=S.struct;
+  const c=parseFormula(sb.formula)||{};
+  const syms=Object.keys(c);
+  let h='<div class="blk" style="--c:'+col+'"><p class="kicker">Substance</p>'+
+    '<h2 class="title-xl">'+esc(sb.name)+'</h2>'+
+    '<div style="font-family:var(--ff-m);font-size:17px;color:'+col+';margin:2px 0 8px">'+pretty(sb.formula)+'</div>'+
+    '<div class="tagrow"><span class="tg" style="--c:'+col+'">'+KIND[sb.kind][0]+'</span>'+
+    (sb.shape?'<span class="tg" style="--c:var(--dim)">'+esc(sb.shape)+'</span>':'')+'</div>'+
+    '<p class="muted" style="margin-top:11px">'+esc(KIND[sb.kind][1])+'</p></div>'+
+    '<div class="blk"><p class="kicker">Note</p><p class="quote" style="--c:'+col+'">'+esc(sb.note)+'</p></div>'+
+    '<div class="blk"><p class="kicker">Numbers</p><dl class="sheet">'+
+      rowOf("Formula mass",formulaMass(sb.formula).toFixed(3)+" u")+
+      rowOf("Atoms per unit",st?String(st.atoms.length):"repeating")+
+      rowOf("Distinct elements",String(syms.length))+
+    '</dl></div>'+
+    '<div class="blk"><p class="kicker">Elements inside</p><div class="chips">';
+  syms.forEach(s=>{const e=BY_SYM[s];
+    h+='<button class="el-chip" style="--c:'+e.cpk+'" data-el="'+s+'" title="'+esc(e.name)+'">'+
+       '<span class="s">'+s+'</span><span class="z">'+(c[s]>1?"×"+c[s]:e.z)+'</span></button>';});
+  h+='</div><p class="muted" style="margin-top:10px;font-size:11.5px">Tap an element to jump straight to one of its atoms.</p></div>';
+  if(sb.kind==="molecular")h+='<div class="blk"><button class="btn" data-go="molecule">Isolate one molecule</button></div>';
+  return h;
+}
+function panelMolecule(){
+  const sb=S.substance,st=S.struct,col=KIND[sb.kind][2];
+  if(!st)return panelSubstance();
+  const counts={};st.atoms.forEach(s=>counts[s]=(counts[s]||0)+1);
+  const orders={1:0,2:0,3:0};st.bonds.forEach(b=>orders[b[2]]++);
+  let h='<div class="blk" style="--c:'+col+'"><p class="kicker">One molecule</p>'+
+    '<h2 class="title-xl">'+esc(sb.name)+'</h2>'+
+    '<div style="font-family:var(--ff-m);font-size:17px;color:'+col+'">'+pretty(sb.formula)+'</div></div>';
+  if(sb.kind!=="molecular")h+='<div class="blk"><div class="notice" style="--c:'+col+'">'+
+    '<b>There is no single molecule here.</b> '+esc(KIND[sb.kind][1])+
+    ' What you are looking at is one repeating unit of a structure that just keeps going.</div></div>';
+  else if(st.auto)h+='<div class="blk"><div class="notice" style="--c:var(--na)">'+
+    '<b>Sketch, not a measurement.</b> This shape was generated from the formula because the '+
+    'real structure is not in the built-in library. The atom counts are right; the connections may not be.</div></div>';
+  h+='<div class="blk"><p class="kicker">Structure</p><dl class="sheet">'+
+    rowOf("Atoms",String(st.atoms.length))+rowOf("Bonds",String(st.bonds.length))+
+    rowOf("Single bonds",String(orders[1]),orders[1]?"":"n")+
+    rowOf("Double bonds",String(orders[2]),orders[2]?"":"n")+
+    rowOf("Triple bonds",String(orders[3]),orders[3]?"":"n")+
+    rowOf("Molecular mass",formulaMass(sb.formula).toFixed(3)+" u")+
+  '</dl></div><div class="blk"><p class="kicker">Atoms present</p><div class="chips">';
+  Object.keys(counts).forEach(s=>{const e=BY_SYM[s];
+    h+='<button class="el-chip" style="--c:'+e.cpk+'" data-el="'+s+'" title="'+esc(e.name)+'">'+
+       '<span class="s">'+s+'</span><span class="z">×'+counts[s]+'</span></button>';});
+  return h+'</div><p class="muted" style="margin-top:10px;font-size:11.5px">Or tap any atom on the canvas.</p></div>';
+}
+function panelAtom(){
+  const e=S.element;if(!e)return "";
+  if(S.electron)return panelElectron();
+  const list=electronList(S.nE),shells=shellsOfList(list);
+  const q=S.nP-S.nE, A=S.nP+S.nN;
+  const exc=SHELL_EXC[e.z]&&S.nE===e.z;
+  let h='<div class="blk" style="--c:'+e.cpk+'"><p class="kicker">Atom</p>'+
+    '<h2 class="title-xl">'+esc(e.name)+'</h2>'+
+    '<div class="tagrow"><span class="tg" style="--c:'+e.color+'">'+e.catName+'</span>'+
+    '<span class="tg" style="--c:var(--dim)">group '+e.group+'</span>'+
+    '<span class="tg" style="--c:var(--dim)">period '+e.period+'</span></div>'+
+    '<p class="lede" style="margin-top:11px">'+esc(e.note)+'</p></div>'+
+    '<div class="blk"><p class="kicker">View</p><div class="seg" id="atomSeg">'+
+      '<button data-v="shell" aria-pressed="'+(S.atomView==="shell")+'">Shell model</button>'+
+      '<button data-v="cloud" aria-pressed="'+(S.atomView==="cloud")+'">Orbital cloud</button>'+
+    '</div><p class="muted" style="margin-top:9px;font-size:11.5px">'+
+    (S.atomView==="shell"
+      ? "Neat rings are a simplification, but every electron here is real and clickable."
+      : "Closer to the truth: electrons are a probability cloud, not dots on a track.")+'</p></div>'+
+    '<div class="blk"><p class="kicker">Build it yourself</p>'+stepper("p","Protons",S.nP,"sets the element","#FF5E6B")+
+      stepper("n","Neutrons",S.nN,"sets the isotope","#9AA6C8")+
+      stepper("e","Electrons",S.nE,"sets the charge","#6C7BFF")+
+      '<div class="btnrow" style="margin-top:10px"><button class="btn sec" data-q="neutral">Neutral</button>'+
+      '<button class="btn sec" data-q="common">Common isotope</button></div></div>'+
+    '<div class="blk"><p class="kicker">Readout</p><dl class="sheet">'+
+      rowOf("Mass number",String(A))+
+      rowOf("Charge",q===0?"0":(q>0?"+"+q:String(q)),q?"q":"n")+
+      rowOf("Shells",shells.filter(x=>x).join(" · ")||"—")+
+      rowOf("Configuration",configOf(S.nE,true))+
+      rowOf("Outer electrons",String(shells.filter(x=>x).slice(-1)[0]||0))+
+      rowOf("Electronegativity",e.eneg?e.eneg.toFixed(2):"—",e.eneg?"":"n")+
+      rowOf("Atomic radius",e.radius+" pm")+
+    '</dl>'+(exc?'<p class="muted" style="margin-top:9px;font-size:11.5px">Heads up: '+e.name+
+      ' is one of the ~20 elements whose real ground state breaks the simple filling order. '+
+      'The rings show the textbook order.</p>':'')+'</div>'+
+    '<div class="blk"><button class="btn" data-go="nucleus">Go into the nucleus</button>'+
+    '<p class="muted" style="margin-top:9px;font-size:11.5px">Or tap an electron on the canvas to open it up.</p></div>';
+  return h;
+}
+function panelElectron(){
+  const el2=S.electron,e=S.element;
+  const orbNames=ORB_NAMES[el2.l]||["?"];
+  const core=el2.n<Math.max(...electronList(S.nE).map(x=>x.n));
+  return '<div class="blk" style="--c:#6C7BFF"><p class="kicker">Inside one electron</p>'+
+    '<h2 class="title-xl">Electron</h2>'+
+    '<div class="tagrow"><span class="tg" style="--c:#6C7BFF">Lepton</span>'+
+    '<span class="tg" style="--c:#46E0B0">Elementary</span>'+
+    '<span class="tg" style="--c:var(--dim)">Generation 1</span></div></div>'+
+    '<div class="blk"><p class="quote" style="--c:#6C7BFF">You have hit the bottom. Every experiment ever '+
+    'run says the electron has no size and no parts — it is a point. There is nothing inside to open.</p></div>'+
+    '<div class="blk"><p class="kicker">What it is</p><dl class="sheet">'+
+      rowOf("Charge","−1 e","q")+
+      rowOf("In coulombs","−1.602×10⁻¹⁹ C")+
+      rowOf("Mass","9.109×10⁻³¹ kg")+
+      rowOf("Rest energy","0.511 MeV/c²")+
+      rowOf("Spin","½ "+(el2.spin==="up"?"↑":"↓"))+
+      rowOf("Size","< 10⁻¹⁸ m","n")+
+      rowOf("Substructure","none known","n")+
+    '</dl></div>'+
+    '<div class="blk"><p class="kicker">Where this one sits</p><dl class="sheet">'+
+      rowOf("Atom",e.name)+
+      rowOf("Shell",(SHELL_LETTER[el2.n-1]||"?")+"  (n = "+el2.n+")")+
+      rowOf("Subshell",el2.sub)+
+      rowOf("Orbital",orbNames[el2.orbital]||el2.sub)+
+      rowOf("Electron",(el2.idx+1)+" of "+S.nE)+
+      rowOf("Role",core?"core":"valence",core?"n":"q")+
+    '</dl><p class="muted" style="margin-top:10px">'+
+    (core?"Buried under the outer shells. It holds the atom together but takes almost no part in chemistry."
+        :"An outer electron. Every bond this atom makes, it makes with one of these.")+'</p></div>'+
+    '<div class="blk"><p class="kicker">Why it has a spin arrow</p>'+
+    '<p class="muted">Two electrons can share one orbital only if their spins point opposite ways. '+
+    'That single rule is why the periodic table has the shape it does.</p></div>'+
+    '<div class="blk"><button class="btn sec" data-q="deselect">Back to the whole atom</button></div>';
+}
+function panelNucleus(){
+  const e=S.element,A=S.nP+S.nN,st=stability(S.nP,S.nN);
+  return '<div class="blk" style="--c:'+st.tone+'"><p class="kicker">Nucleus</p>'+
+    '<h2 class="title-xl">'+(e?esc(e.name):"—")+'‑'+A+'</h2>'+
+    '<div class="tagrow"><span class="tg" style="--c:'+st.tone+'">'+st.label+'</span>'+
+    '<span class="tg" style="--c:var(--dim)">'+A+' nucleons</span></div>'+
+    '<p class="lede" style="margin-top:11px">'+esc(st.note)+'</p></div>'+
+    '<div class="blk"><p class="kicker">Build it yourself</p>'+
+      stepper("p","Protons",S.nP,"sets the element","#FF5E6B")+
+      stepper("n","Neutrons",S.nN,"sets the isotope","#9AA6C8")+
+      '<div class="btnrow" style="margin-top:10px"><button class="btn sec" data-q="common">Common isotope</button></div></div>'+
+    '<div class="blk"><p class="kicker">Numbers</p><dl class="sheet">'+
+      rowOf("Protons",String(S.nP))+rowOf("Neutrons",String(S.nN))+
+      rowOf("Neutron / proton",S.nP?(S.nN/S.nP).toFixed(2):"—")+
+      rowOf("Diameter","~"+(1.25*Math.pow(Math.max(A,1),1/3)*2).toFixed(1)+" fm")+
+      rowOf("Share of atom's volume","~0.0000000001%","n")+
+    '</dl></div>'+
+    '<div class="blk"><p class="quote" style="--c:'+st.tone+'">If the atom were a football stadium, '+
+    'the nucleus would be a pea on the centre spot. Everything else is empty.</p></div>'+
+    '<div class="blk"><p class="muted">Tap any proton or neutron to go one level deeper.</p></div>';
+}
+function panelQuark(){
+  const nu=S.nucleon;if(!nu)return "";
+  if(S.quark){
+    const Q=QUARKS[S.quark.f],cc=S.quark.color;
+    return '<div class="blk" style="--c:'+Q.col+'"><p class="kicker">Inside one quark</p>'+
+      '<h2 class="title-xl">'+Q.name+'</h2>'+
+      '<div class="tagrow"><span class="tg" style="--c:'+Q.col+'">Quark</span>'+
+      '<span class="tg" style="--c:#46E0B0">Elementary</span>'+
+      '<span class="tg" style="--c:'+COLORC[cc]+'">colour '+cc+'</span></div></div>'+
+      '<div class="blk"><p class="quote" style="--c:'+Q.col+'">The bottom again. No experiment has ever '+
+      'found anything inside a quark — and none has ever seen one on its own, either.</p></div>'+
+      '<div class="blk"><p class="kicker">What it is</p><dl class="sheet">'+
+        rowOf("Charge",Q.q+" e","q")+rowOf("Mass",Q.mass)+rowOf("Spin","½")+
+        rowOf("Colour charge",cc)+rowOf("Generation","1")+
+        rowOf("Substructure","none known","n")+
+      '</dl><p class="muted" style="margin-top:10px">'+esc(Q.note)+'</p></div>'+
+      '<div class="blk"><p class="kicker">Why you cannot pull it out</p>'+
+      '<p class="muted">Pull two quarks apart and the force between them does not fade — it stays constant. '+
+      'Pull hard enough and the energy you put in simply makes a new pair of quarks. You never end up holding one.</p></div>'+
+      '<div class="blk"><button class="btn sec" data-q="deselectq">Back to the whole nucleon</button></div>';
+  }
+  const isP=nu.type==="p";
+  return '<div class="blk" style="--c:#FFB43C"><p class="kicker">Inside a nucleon</p>'+
+    '<h2 class="title-xl">'+(isP?"Proton":"Neutron")+'</h2>'+
+    '<div class="tagrow"><span class="tg" style="--c:#FFB43C">Baryon</span>'+
+    '<span class="tg" style="--c:var(--dim)">'+(isP?"u u d":"u d d")+'</span>'+
+    '<span class="tg" style="--c:var(--dim)">charge '+(isP?"+1":"0")+'</span></div>'+
+    '<p class="lede" style="margin-top:11px">Three quarks, held by gluons. Swap one up quark for a down '+
+    'and a proton becomes a neutron — that single swap is what radioactive beta decay is.</p></div>'+
+    '<div class="blk"><p class="kicker">Numbers</p><dl class="sheet">'+
+      rowOf("Charge",isP?"+1 e":"0","q")+
+      rowOf("Mass",isP?"938.3 MeV/c²":"939.6 MeV/c²")+
+      rowOf("Quark content",isP?"up up down":"up down down")+
+      rowOf("Diameter","~1.7×10⁻¹⁵ m")+
+      rowOf("Spin","½")+
+    '</dl></div>'+
+    '<div class="blk"><p class="quote" style="--c:#FFB43C">The three quarks account for barely 1% of the mass. '+
+    'Almost all of your weight is the energy of the gluons holding them together.</p></div>'+
+    '<div class="blk"><p class="muted">Tap a quark to open it.</p></div>';
+}
+function stepper(k,label,val,hint,col){
+  return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">'+
+    '<div style="flex:1;min-width:0"><div style="font-size:12.5px;display:flex;align-items:center;gap:7px">'+
+    '<i style="width:9px;height:9px;border-radius:50%;background:'+col+';box-shadow:0 0 9px '+col+';display:inline-block;flex:0 0 auto"></i>'+
+    label+'</div><div style="font-family:var(--ff-m);font-size:9.5px;color:var(--dimmer)">'+hint+'</div></div>'+
+    '<div style="font-family:var(--ff-m);font-size:17px;min-width:36px;text-align:center;color:'+col+'">'+val+'</div>'+
+    '<div style="display:flex;gap:3px">'+
+    '<button class="ghost" style="padding:0;width:27px;height:27px;justify-content:center" data-step="'+k+'" data-d="-1" aria-label="fewer">−</button>'+
+    '<button class="ghost" style="padding:0;width:27px;height:27px;justify-content:center" data-step="'+k+'" data-d="1" aria-label="more">+</button>'+
+    '</div></div>';
+}
+function wirePanel(){
+  const I=$("insp");
+  I.querySelectorAll("[data-sub]").forEach(b=>b.onclick=()=>openSubstance(b.dataset.sub));
+  I.querySelectorAll("[data-el]").forEach(b=>b.onclick=()=>openAtom(b.dataset.el,0));
+  I.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
+  I.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{S.atomView=b.dataset.v;CLOUD=null;renderInspector();});
+  I.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.step,d=+b.dataset.d;
+    if(k==="p"){const was=S.nP;S.nP=Math.max(0,Math.min(118,S.nP+d));
+      if(S.nP!==was&&S.nP>=1){S.element=ELS[S.nP-1];S.nN=S.element.n0;S.nE=S.nP;
+        S.electron=null;toast("Now "+S.element.name);}}
+    else if(k==="n")S.nN=Math.max(0,Math.min(200,S.nN+d));
+    else {S.nE=Math.max(0,Math.min(150,S.nE+d));S.electron=null;CLOUD=null;}
+    renderInspector();renderCrumbs();
+  });
+  I.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{
+    const q=b.dataset.q;
+    if(q==="neutral"){S.nE=S.nP;S.electron=null;CLOUD=null;toast("Electrons balanced — neutral atom");}
+    if(q==="common"&&S.element){S.nN=S.element.n0;toast("Set to the common isotope");}
+    if(q==="deselect")S.electron=null;
+    if(q==="deselectq")S.quark=null;
+    renderInspector();
+  });
+}
+function renderFoot(){
+  const map={
+    object:"tap a substance bubble to enter it",
+    substance:"tap one molecule to isolate it",
+    molecule:"tap any atom to zoom into it",
+    atom:"tap an <span class='hot'>electron</span> to open it · tap the nucleus to go deeper",
+    nucleus:"tap a <span class='hot'>proton</span> or neutron to see its quarks",
+    quark:"tap a <span class='hot'>quark</span> — this is as deep as physics goes"
+  };
+  $("foot").innerHTML='<span>'+(map[S.scale]||"")+'</span>'+
+    '<span><kbd>←</kbd><kbd>→</kbd> move between scales</span>';
+}
+
+/* ============================================================
+   CREATE
+   ============================================================ */
+function createPanel(){
+  let h='<div class="blk"><p class="kicker">Create</p>'+
+    '<h2 class="title-xl">Build anything</h2>'+
+    '<p class="lede">Type a formula and it gets drawn, whether or not it is in the library. '+
+    'Or pick a single element and go straight to its atom.</p></div>'+
+    '<div class="blk"><p class="kicker">From a formula</p>'+
+    '<div style="display:flex;gap:7px">'+
+    '<input id="fIn" placeholder="C6H12O6" autocomplete="off" spellcheck="false" '+
+    'style="flex:1;min-width:0;background:var(--glass);border:1px solid var(--rim);border-radius:9px;padding:9px 12px;font-family:var(--ff-m);font-size:13px;outline:none">'+
+    '<button class="btn" style="width:auto;padding:9px 16px" id="fGo">Build</button></div>'+
+    '<div id="fErr" style="color:var(--red);font-size:11.5px;margin-top:7px;min-height:15px"></div>'+
+    '<div class="chips" style="margin-top:4px">';
+  ["H2O","CO2","NH3","C2H6O","C6H6","C6H12O6","H2SO4","CH4","NaCl","SiO2"].forEach(f=>{
+    h+='<button class="ghost" style="padding:4px 10px;font-family:var(--ff-m);font-size:11.5px" data-f="'+f+'">'+pretty(f)+'</button>';});
+  h+='</div></div><div class="blk"><p class="kicker">From one element</p>'+
+    '<input id="eIn" placeholder="Search all 118…" autocomplete="off" '+
+    'style="width:100%;background:var(--glass);border:1px solid var(--rim);border-radius:9px;padding:9px 12px;font-size:13px;outline:none;margin-bottom:9px">'+
+    '<div class="chips" id="eGrid"></div></div>'+
+    '<div class="blk"><button class="btn sec" id="fClose">Close</button></div>';
+  return h;
+}
+function elGrid(q){
+  const box=$("eGrid");if(!box)return;
+  const list=q?ELS.filter(e=>e.name.toLowerCase().includes(q)||e.sym.toLowerCase().startsWith(q)||String(e.z)===q):ELS;
+  box.innerHTML="";
+  list.slice(0,q?24:118).forEach(e=>{
+    const b=document.createElement("button");
+    b.className="el-chip";b.style.setProperty("--c",e.cpk);b.title=e.name;
+    b.innerHTML='<span class="s">'+e.sym+'</span><span class="z">'+e.z+'</span>';
+    b.onclick=()=>{S.create=false;
+      S.specimen={label:e.name,blurb:e.note,c:e.cpk,source:"create",parts:[[e.sym,100]]};
+      openSubstance(e.sym);openAtom(e.sym,0);};
+    box.appendChild(b);
+  });
+}
+function wireCreate(){
+  const build=()=>{
+    const v=($("fIn").value||"").trim().replace(/\s+/g,"");
+    if(!v)return;
+    const c=parseFormula(v);
+    if(!c){$("fErr").textContent="I do not recognise those element symbols. Try H2O or C6H12O6.";return;}
+    S.create=false;
+    const sb=substanceOf(v);
+    S.specimen={label:"Your build",blurb:"Built by hand, not scanned.",c:KIND[sb.kind][2],
+      source:"create",parts:[[v,100]]};
+    openSubstance(v);
+  };
+  $("fGo").onclick=build;
+  $("fIn").onkeydown=ev=>{if(ev.key==="Enter")build();};
+  $("insp").querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{$("fIn").value=b.dataset.f;build();});
+  $("eIn").oninput=ev=>elGrid(ev.target.value.trim().toLowerCase());
+  $("fClose").onclick=()=>{S.create=false;renderInspector();};
+  elGrid("");
+}
+$("btnCreate").onclick=()=>{S.create=!S.create;$("btnCreate").classList.toggle("on",S.create);renderInspector();};
+$("btnRescan").onclick=()=>{S.create=false;$("btnCreate").classList.remove("on");
+  S.specimen=null;S.substance=null;S.element=null;S.nucleon=null;S.electron=null;
+  stopCam();go("object");};
+
+/* ============================================================
+   SCAN  —  camera / photo  ->  Claude  ->  composition
+   ============================================================ */
+let SAMPLE=null,IMGOK=false,CAMSTREAM=null,SHOT=null;
+const vp=$("viewport");
+function stopCam(){if(CAMSTREAM){CAMSTREAM.getTracks().forEach(t=>t.stop());CAMSTREAM=null;}}
+function vpIdle(msg){
+  stopCam();SHOT=null;
+  vp.innerHTML='<div class="vp-idle"><p class="big">Point it at something real.</p>'+
+    '<p class="muted">'+(msg||"Everything around you is built from the same hundred-odd pieces. "+
+    "Scan an object and walk all the way down to the quarks inside it.")+'</p></div>';
+}
+function reticle(){return '<div class="reticle"><span></span><span></span><span></span><span></span>'+
+  '<div class="sweep"></div></div>';}
+function renderScanButtons(){
+  const box=$("scanBtns");box.innerHTML="";
+  const photo=document.createElement("button");
+  photo.className="btn";photo.innerHTML=
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8Z"/><circle cx="12" cy="12.5" r="3.5"/></svg>'+
+    (SHOT?"Identify this":"Take or choose a photo");
+  photo.onclick=()=>SHOT?identify():filePick();
+  box.appendChild(photo);
+  if(!SHOT&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+    const live=document.createElement("button");
+    live.className="btn sec";live.textContent="Try the live camera";
+    live.onclick=startCam;box.appendChild(live);
+  }
+  if(SHOT){
+    const again=document.createElement("button");
+    again.className="btn sec";again.textContent="Pick another";
+    again.onclick=()=>{vpIdle();renderScanButtons();renderScanNote();};
+    box.appendChild(again);
+  }
+  renderScanNote();
+}
+function renderScanNote(){
+  const n=$("scanNote");
+  if(!SAMPLE){n.innerHTML='<div class="notice" style="--c:var(--na)"><b>Lens needs Claude.</b> '+
+    'Photo recognition runs on your own Claude account and is not available in this view, '+
+    'so the specimens below are the way in. Everything past the first screen works exactly the same.</div>';return;}
+  if(!IMGOK){n.innerHTML='<div class="notice" style="--c:var(--na)"><b>No image support here.</b> '+
+    'This viewer cannot send photos to Claude. Use a specimen below instead.</div>';return;}
+  n.innerHTML=SHOT?'<div class="notice" style="--c:var(--mint)"><b>Ready.</b> Identifying uses a little of your own Claude usage.</div>':"";
+}
+function filePick(){
+  const inp=document.createElement("input");
+  inp.type="file";inp.accept="image/*";inp.capture="environment";
+  inp.onchange=()=>{const f=inp.files&&inp.files[0];if(!f)return;showShot(f);};
+  inp.click();
+}
+function showShot(blob){
+  stopCam();SHOT=blob;
+  const url=URL.createObjectURL(blob);
+  vp.innerHTML='<img alt="What you are about to scan" src="'+url+'">'+reticle();
+  renderScanButtons();
+}
+async function startCam(){
+  try{
+    const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});
+    CAMSTREAM=st;
+    vp.innerHTML='<video playsinline muted autoplay></video>'+reticle();
+    const v=vp.querySelector("video");v.srcObject=st;await v.play().catch(()=>{});
+    const box=$("scanBtns");box.innerHTML="";
+    const snap=document.createElement("button");
+    snap.className="btn";snap.textContent="Capture and identify";
+    snap.onclick=()=>{
+      const c=document.createElement("canvas");
+      c.width=v.videoWidth||960;c.height=v.videoHeight||720;
+      c.getContext("2d").drawImage(v,0,0,c.width,c.height);
+      c.toBlob(b=>{if(b){showShot(b);identify();}},"image/jpeg",.88);
+    };
+    box.appendChild(snap);
+    const stop=document.createElement("button");
+    stop.className="btn sec";stop.textContent="Stop camera";
+    stop.onclick=()=>{vpIdle();renderScanButtons();};
+    box.appendChild(stop);
+  }catch(err){
+    vpIdle("The camera was blocked or is unavailable here. Take a photo with the button below instead — on a phone it opens the camera directly.");
+    renderScanButtons();
+  }
+}
+const LENS_PROMPT=
+"You are the recognition step of a chemistry app for children. Look at the photo and identify the single "+
+"most prominent everyday object.\n\n"+
+"Reply with ONLY a JSON object of exactly this shape:\n"+
+'{"label":"Lemon","blurb":"One or two vivid, plain-English sentences, at most 40 words, about what this thing is chemically.",'+
+'"parts":[{"formula":"H2O","pct":88},{"formula":"C6H8O7","pct":6},{"formula":"C6H12O6","pct":6}]}\n\n'+
+"Rules:\n"+
+"- Every \"formula\" must be a real chemical formula built from standard element symbols: H2O, NaCl, C6H12O6, SiO2, CaCO3, Fe, Cu, C.\n"+
+"- For an object made of one metal or element, use the bare symbol, e.g. Fe or Cu or Al.\n"+
+"- Give 1 to 5 substances, most abundant first, with pct roughly summing to 100.\n"+
+"- Do not invent formulas you are unsure of; prefer a simpler correct one.\n"+
+"- If you cannot tell what the object is, use label \"Unclear\" and an empty parts array.\n"+
+"- No text outside the JSON.";
+async function identify(){
+  if(!SAMPLE||!SHOT)return;
+  const prev=vp.innerHTML;
+  const busy=document.createElement("div");
+  busy.className="busy";
+  busy.innerHTML='<div><div class="ring"></div><div style="font-family:var(--ff-m);font-size:12px;color:var(--dim)">'+
+    'Looking at it…</div><div style="font-size:11.5px;color:var(--dimmer);margin-top:5px">this can take a few seconds</div></div>';
+  vp.appendChild(busy);
+  try{
+    const data=await SAMPLE.json(LENS_PROMPT,{images:SHOT,modelTier:"default"});
+    const label=String(data&&data.label||"").trim();
+    const raw=Array.isArray(data&&data.parts)?data.parts:[];
+    const parts=[];
+    raw.forEach(p=>{
+      const f=String(p&&p.formula||"").replace(/\s+/g,"");
+      if(!f||!parseFormula(f))return;
+      const pct=Math.max(0.01,Math.min(100,Number(p.pct)||0));
+      parts.push([f,pct]);
+    });
+    if(!label||label.toLowerCase()==="unclear"||!parts.length){
+      busy.remove();
+      toast("Could not read that one — try a clearer, closer shot");
+      renderScanNote();
+      $("scanNote").innerHTML='<div class="notice" style="--c:var(--na)"><b>No clear match.</b> '+
+        'Try a closer, better-lit photo of a single object — or start from a specimen below.</div>';
+      return;
+    }
+    const sb=substanceOf(parts[0][0]);
+    S.specimen={label,blurb:String(data.blurb||"").slice(0,240)||"Scanned with the camera.",
+      c:KIND[sb.kind][2],source:"lens",parts};
+    const dropped=raw.length-parts.length;
+    stopCam();
+    go("object");
+    toast(dropped>0?("Identified · "+dropped+" unreadable formula"+(dropped>1?"s":"")+" skipped")
+                   :("Identified: "+label));
+  }catch(e){
+    busy.remove();
+    const code=e&&e.code;
+    const msg={not_granted:"You declined Claude access, so the Lens is off. The specimens below still work.",
+      rate_limited:"Too many requests just now. Wait a moment, or use a specimen below.",
+      images_unavailable:"This viewer cannot send photos to Claude. Use a specimen below.",
+      image_rejected:"That image could not be read. Try a smaller or clearer photo.",
+      invalid_json:"The answer came back garbled. Try once more.",
+      refused:"Claude declined to identify that image.",
+      cancelled:""}[code]||"Something went wrong reaching Claude. Try again, or use a specimen below.";
+    if(msg)$("scanNote").innerHTML='<div class="notice" style="--c:var(--red)"><b>Lens failed.</b> '+esc(msg)+'</div>';
+    vp.innerHTML=prev;
+  }
+}
+function renderPicker(){
+  const box=$("picker");box.innerHTML="";
+  SPECIMENS.forEach(sp=>{
+    const b=document.createElement("button");
+    b.className="spec";b.style.setProperty("--c",sp.c);
+    b.innerHTML='<span class="ico">'+sp.icon+'</span>'+
+      '<span class="l">'+esc(sp.label)+'</span><span class="s">'+esc(sp.sub)+'</span>';
+    b.onclick=()=>{stopCam();S.specimen=Object.assign({source:"builtin"},sp);go("object");
+      toast(sp.label+" — tap a bubble to go in");};
+    box.appendChild(b);
+  });
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+addEventListener("keydown",ev=>{
+  if(/^(INPUT|TEXTAREA)$/.test(ev.target.tagName))return;
+  if(ev.key!=="ArrowLeft"&&ev.key!=="ArrowRight")return;
+  const i=SCALES.findIndex(s=>s.id===S.scale);
+  const j=i+(ev.key==="ArrowRight"?1:-1);
+  if(j<0||j>=SCALES.length)return;
+  if(!reachable(SCALES[j].id))return;
+  ev.preventDefault();go(SCALES[j].id);
+});
+renderPicker();renderScanButtons();vpIdle();
+renderRail();renderCrumbs();renderInspector();renderFoot();
+fit();
+
+/* connection is probed in the reactions script below */
+
+let t0=null;
+function frame(ts){
+  if(t0==null)t0=ts;
+  const t=(ts-t0)/1000;
+  if($("sc-view").classList.contains("live")&&R[S.scale]&&R[S.scale].draw){
+    try{R[S.scale].draw(t);}catch(err){/* keep the loop alive */}
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+<script>
+"use strict";
+/* ============================================================
+   REACTIONS
+   in / out are [formula, coefficient]. dH in kJ per mole of equation.
+   ============================================================ */
+const REACTIONS=[
+ {in:[["H2",2],["O2",1]],out:[["H2O",2]],dH:-572,type:"Synthesis",
+  name:"Hydrogen burning",see:"A sharp bang, and the only thing left is water on the glass."},
+ {in:[["CH4",1],["O2",2]],out:[["CO2",1],["H2O",2]],dH:-890,type:"Combustion",
+  name:"Natural gas burning",see:"The blue flame on a gas hob. Yellow means it is not getting enough air."},
+ {in:[["C",1],["O2",1]],out:[["CO2",1]],dH:-394,type:"Combustion",
+  name:"Charcoal burning",see:"No flame at all — just a deep orange glow that creeps across the surface."},
+ {in:[["Na",2],["Cl2",1]],out:[["NaCl",2]],dH:-822,type:"Synthesis",
+  name:"Making salt",see:"A furious yellow flame and white smoke that settles as ordinary table salt."},
+ {in:[["N2",1],["H2",3]],out:[["NH3",2]],dH:-92,type:"Synthesis",
+  name:"The Haber process",see:"Nothing to watch. This quiet reaction feeds about half the people alive."},
+ {in:[["HCl",1],["NaOH",1]],out:[["NaCl",1],["H2O",1]],dH:-57,type:"Neutralisation",
+  name:"Acid meets alkali",see:"Nothing visible happens — but the beaker gets noticeably warm."},
+ {in:[["CaCO3",1]],out:[["CaO",1],["CO2",1]],dH:178,type:"Decomposition",
+  name:"Burning limestone",see:"Needs a furnace. The rock crumbles into quicklime and breathes out CO₂."},
+ {in:[["Mg",2],["O2",1]],out:[["MgO",2]],dH:-1204,type:"Combustion",
+  name:"Magnesium burning",see:"A white light so bright it hurts to look at, leaving a crumbly white ash."},
+ {in:[["Fe",4],["O2",3]],out:[["Fe2O3",2]],dH:-1648,type:"Oxidation",
+  name:"Rusting",see:"The same reaction as burning, run so slowly you never catch it happening."},
+ {in:[["H2O2",2]],out:[["H2O",2],["O2",1]],dH:-196,type:"Decomposition",
+  name:"Peroxide breaking down",see:"Gentle fizzing. Drop in some yeast and it erupts into foam."},
+ {in:[["CaCO3",1],["HCl",2]],out:[["CaCl2",1],["H2O",1],["CO2",1]],dH:-15,type:"Acid on carbonate",
+  name:"Vinegar on chalk",see:"Violent fizzing as carbon dioxide pours off the surface."},
+ {in:[["C2H6O",1],["O2",3]],out:[["CO2",2],["H2O",3]],dH:-1367,type:"Combustion",
+  name:"Alcohol burning",see:"A pale blue flame that is almost invisible in daylight."},
+ {in:[["H2O",2]],out:[["H2",2],["O2",1]],dH:572,type:"Electrolysis",
+  name:"Splitting water",see:"Bubbles on both electrodes — and exactly twice as many on the hydrogen side."},
+ {in:[["Zn",1],["HCl",2]],out:[["ZnCl2",1],["H2",1]],dH:-153,type:"Displacement",
+  name:"Zinc in acid",see:"The metal visibly dissolves while hydrogen streams off it."},
+ {in:[["NaHCO3",1],["C2H4O2",1]],out:[["NaC2H3O2",1],["H2O",1],["CO2",1]],dH:-23,type:"Acid on carbonate",
+  name:"Baking soda volcano",see:"The froth is just carbon dioxide getting trapped in the liquid."},
+ {in:[["CO2",6],["H2O",6]],out:[["C6H12O6",1],["O2",6]],dH:2803,type:"Photosynthesis",
+  name:"How plants eat",see:"Runs on sunlight. Every scrap of food you have ever eaten started here."},
+ {in:[["C6H12O6",1],["O2",6]],out:[["CO2",6],["H2O",6]],dH:-2803,type:"Respiration",
+  name:"How you burn food",see:"Happening in every cell of your body, right now, very slowly."},
+ {in:[["S",1],["O2",1]],out:[["SO2",1]],dH:-297,type:"Combustion",
+  name:"Sulfur burning",see:"An eerie blue flame and a smell that makes you cough."}
+];
+const RX_SHELF=["H2","O2","N2","C","S","Na","Mg","Fe","Zn","Cl2","H2O","CO2","CH4",
+  "HCl","NaOH","CaCO3","H2O2","C2H6O","C6H12O6","NaHCO3","C2H4O2"];
+const RX_NAMES={H2:"hydrogen",O2:"oxygen",N2:"nitrogen",C:"carbon",S:"sulfur",Na:"sodium",
+  Mg:"magnesium",Fe:"iron",Zn:"zinc",Cl2:"chlorine",H2O:"water",CO2:"carbon dioxide",
+  CH4:"methane",HCl:"acid",NaOH:"alkali",CaCO3:"chalk",H2O2:"peroxide",C2H6O:"alcohol",
+  C6H12O6:"glucose",NaHCO3:"baking soda",C2H4O2:"vinegar",NaCl:"salt",MgO:"magnesia",
+  CaO:"quicklime",Fe2O3:"rust",NH3:"ammonia",SO2:"sulfur dioxide",CaCl2:"calcium chloride",
+  ZnCl2:"zinc chloride",NaC2H3O2:"sodium acetate"};
+
+/* ---------- exact-rational equation balancer ---------- */
+function gcd2(a,b){a=Math.abs(a);b=Math.abs(b);while(b){const t=a%b;a=b;b=t;}return a||1;}
+function lcm2(a,b){return Math.abs(a*b)/gcd2(a,b);}
+const rn=r=>{let[n,d]=r;if(d<0){n=-n;d=-d;}const g=gcd2(n,d);return[n/g,d/g];};
+const rsub2=(a,b)=>rn([a[0]*b[1]-b[0]*a[1],a[1]*b[1]]);
+const rmul2=(a,b)=>rn([a[0]*b[0],a[1]*b[1]]);
+const rdiv2=(a,b)=>rn([a[0]*b[1],a[1]*b[0]]);
+function balance(reactants,products){
+  const species=reactants.concat(products);
+  if(species.length<2)return null;
+  const counts=species.map(parseFormula);
+  if(counts.some(c=>!c))return null;
+  const els=[...new Set(counts.reduce((a,c)=>a.concat(Object.keys(c)),[]))];
+  const n=species.length;
+  const M=els.map(e=>species.map((sp,j)=>{
+    const v=counts[j][e]||0; return [j<reactants.length?v:-v,1];}));
+  let row=0;const piv=[];
+  for(let col=0;col<n&&row<M.length;col++){
+    let sel=-1;
+    for(let r=row;r<M.length;r++)if(M[r][col][0]!==0){sel=r;break;}
+    if(sel<0)continue;
+    const tmp=M[row];M[row]=M[sel];M[sel]=tmp;
+    const pv=M[row][col];
+    for(let c=0;c<n;c++)M[row][c]=rdiv2(M[row][c],pv);
+    for(let r=0;r<M.length;r++){
+      if(r===row)continue;
+      const f=M[r][col];if(f[0]===0)continue;
+      for(let c=0;c<n;c++)M[r][c]=rsub2(M[r][c],rmul2(f,M[row][c]));
+    }
+    piv.push(col);row++;
+  }
+  const free=[];for(let c=0;c<n;c++)if(piv.indexOf(c)<0)free.push(c);
+  if(free.length!==1)return null;
+  const fc=free[0],x=new Array(n).fill(null).map(()=>[0,1]);
+  x[fc]=[1,1];
+  piv.forEach((pc,i)=>{x[pc]=rn([-M[i][fc][0],M[i][fc][1]]);});
+  let L=1;x.forEach(v=>{L=lcm2(L,v[1]);});
+  let ints=x.map(v=>Math.round(v[0]*L/v[1]));
+  let G=0;ints.forEach(v=>{G=gcd2(G||v,v);});
+  ints=ints.map(v=>v/(G||1));
+  if(ints.some(v=>v<=0||!isFinite(v)))return null;
+  return {in:reactants.map((f,i)=>[f,ints[i]]),
+          out:products.map((f,i)=>[f,ints[reactants.length+i]])};
+}
+function findReaction(set){
+  const key=a=>a.slice().sort().join("+");
+  const k=key(set);
+  for(const r of REACTIONS) if(key(r.in.map(x=>x[0]))===k) return r;
+  return null;
+}
+function eqHTML(rx,dark){
+  const side=arr=>arr.map(([f,c])=>
+    (c>1?'<span class="co">'+c+'</span>':"")+pretty(f)).join('<span class="sp">+</span>');
+  return side(rx.in)+'<span class="arrow">⟶</span>'+side(rx.out);
+}
+function eqText(rx){
+  const side=arr=>arr.map(([f,c])=>(c>1?c:"")+f).join(" + ");
+  return side(rx.in)+" → "+side(rx.out);
+}
+function atomTally(side){
+  const t={};
+  side.forEach(([f,c])=>{const p=parseFormula(f)||{};
+    Object.keys(p).forEach(k=>t[k]=(t[k]||0)+p[k]*c);});
+  return t;
+}
+
+/* ============================================================
+   REACTION STAGE
+   ============================================================ */
+S.rxMode=false;
+S.rx={picked:[],rx:null,playing:false,t0:0,built:null,custom:null};
+const rxcv=$("rxcv"),rxx=rxcv.getContext("2d");
+let RW=0,RH=0;
+function rxFit(){const r=rxcv.getBoundingClientRect();const d=Math.min(2,window.devicePixelRatio||1);
+  RW=Math.max(1,r.width);RH=Math.max(1,r.height);
+  rxcv.width=Math.round(RW*d);rxcv.height=Math.round(RH*d);rxx.setTransform(d,0,0,d,0,0);
+  if(S.rx.rx)rxBuild();}
+new ResizeObserver(rxFit).observe(rxcv);
+
+function placeSide(side,W,H){
+  const inst=[];side.forEach(([f,c])=>{for(let k=0;k<c;k++)inst.push(f);});
+  const n=inst.length||1;
+  const cols=Math.max(1,Math.ceil(Math.sqrt(n*1.6))),rows=Math.ceil(n/cols);
+  const cellW=W/cols,cellH=H/rows;
+  const atoms=[],bonds=[];
+  inst.forEach((f,idx)=>{
+    const st=structureFor(f)||{atoms:[f],bonds:[]};
+    const L=layoutMolecule(st);
+    const k=Math.min(cellW*.74/Math.max(L.w,1),cellH*.74/Math.max(L.h,1),1.0);
+    const gx=(idx%cols+.5)*cellW-W/2, gy=(Math.floor(idx/cols)+.5)*cellH-H/2;
+    const base=atoms.length;
+    st.atoms.forEach((sym,ai)=>{
+      atoms.push({sym,x:gx+(L.P[ai].x-L.cx)*k,y:gy+(L.P[ai].y-L.cy)*k,
+        r:Math.max(4,atomR(BY_SYM[sym])*k),mol:idx});
+    });
+    st.bonds.forEach(b=>bonds.push([base+b[0],base+b[1],b[2]]));
+  });
+  return {atoms,bonds,count:n};
+}
+function rxBuild(){
+  const rx=S.rx.rx; if(!rx||!RW)return;
+  const W=RW*.86,H=RH*.80;
+  const A=placeSide(rx.in,W,H), B=placeSide(rx.out,W,H);
+  const pool={};B.atoms.forEach((a,i)=>{(pool[a.sym]=pool[a.sym]||[]).push(i);});
+  const map=A.atoms.map(a=>{const q=pool[a.sym];return q&&q.length?q.shift():-1;});
+  const spread=Math.min(RW,RH)*.34;
+  A.atoms.forEach((a,i)=>{
+    const ang=i*2.399963;
+    const rr=spread*(.55+((i*37)%50)/100*.75);
+    a.sx=Math.cos(ang)*rr; a.sy=Math.sin(ang)*rr*.82;
+  });
+  S.rx.built={A,B,map,ok:map.every(m=>m>=0)};
+}
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+function rxDraw(now){
+  if(!RW)return;
+  rxx.clearRect(0,0,RW,RH);
+  const g=rxx.createRadialGradient(RW/2,RH/2,0,RW/2,RH/2,Math.max(RW,RH)*.6);
+  g.addColorStop(0,"rgba(59,91,255,.10)");g.addColorStop(1,"rgba(0,0,0,0)");
+  rxx.fillStyle=g;rxx.fillRect(0,0,RW,RH);
+  rxx.strokeStyle="rgba(255,255,255,.035)";rxx.lineWidth=1;
+  for(let x=(RW/2)%44;x<RW;x+=44){rxx.beginPath();rxx.moveTo(x,0);rxx.lineTo(x,RH);rxx.stroke();}
+  for(let y=(RH/2)%44;y<RH;y+=44){rxx.beginPath();rxx.moveTo(0,y);rxx.lineTo(RW,y);rxx.stroke();}
+
+  const b=S.rx.built;
+  if(!b){
+    rxx.font='500 14px "DM Sans",system-ui,sans-serif';rxx.textAlign="center";
+    rxx.fillStyle="rgba(200,206,222,.55)";
+    rxx.fillText("Pick reactants from the panel, or load one from the library.",RW/2,RH/2);
+    return;
+  }
+  let p=0;
+  if(S.rx.playing){
+    p=Math.min(1,(now-S.rx.t0)/3.4);
+    if(p>=1)S.rx.playing=false;
+  }
+  const cx=RW/2,cy=RH/2;
+  const conv=Math.min(1,p/.42), regr=Math.max(0,(p-.58)/.42);
+  const aA=1-Math.min(1,p/.40), aB=Math.max(0,(p-.60)/.40);
+  const pos=i=>{
+    const a=b.A.atoms[i], j=b.map[i], t2=b.B.atoms[j]||a;
+    if(p<=0){return[cx+a.x,cy+a.y];}
+    if(p>=1){return[cx+t2.x,cy+t2.y];}
+    if(p<.5){const u=ease(p/.5);
+      return[cx+a.x+(a.sx-a.x)*u, cy+a.y+(a.sy-a.y)*u];}
+    const u=ease((p-.5)/.5);
+    return[cx+a.sx+(t2.x-a.sx)*u, cy+a.sy+(t2.y-a.sy)*u];
+  };
+  /* reactant bonds fade out */
+  if(aA>.01){
+    rxx.globalAlpha=aA;
+    b.A.bonds.forEach(bd=>{
+      const[ax,ay]=pos(bd[0]),[bx,by]=pos(bd[1]);
+      const dx=bx-ax,dy=by-ay,d=Math.hypot(dx,dy)||1,nx=-dy/d,ny=dx/d;
+      const offs=bd[2]===1?[0]:bd[2]===2?[-3,3]:[-5,0,5];
+      offs.forEach(o=>{rxx.beginPath();rxx.moveTo(ax+nx*o,ay+ny*o);rxx.lineTo(bx+nx*o,by+ny*o);
+        rxx.strokeStyle="rgba(200,208,232,.85)";rxx.lineWidth=2.6;rxx.lineCap="round";rxx.stroke();});
+    });
+    rxx.globalAlpha=1;
+  }
+  /* product bonds fade in */
+  if(aB>.01){
+    rxx.globalAlpha=aB;
+    const inv=[];b.map.forEach((m,i)=>{if(m>=0)inv[m]=i;});
+    b.B.bonds.forEach(bd=>{
+      const i0=inv[bd[0]],i1=inv[bd[1]];
+      if(i0==null||i1==null)return;
+      const[ax,ay]=pos(i0),[bx,by]=pos(i1);
+      const dx=bx-ax,dy=by-ay,d=Math.hypot(dx,dy)||1,nx=-dy/d,ny=dx/d;
+      const offs=bd[2]===1?[0]:bd[2]===2?[-3,3]:[-5,0,5];
+      offs.forEach(o=>{rxx.beginPath();rxx.moveTo(ax+nx*o,ay+ny*o);rxx.lineTo(bx+nx*o,by+ny*o);
+        rxx.strokeStyle="rgba(150,231,200,.95)";rxx.lineWidth=2.8;rxx.lineCap="round";rxx.stroke();});
+    });
+    rxx.globalAlpha=1;
+  }
+  /* atoms */
+  b.A.atoms.forEach((a,i)=>{
+    const[x,y]=pos(i);
+    const e=BY_SYM[a.sym];
+    const grd=rxx.createRadialGradient(x-a.r*.36,y-a.r*.42,a.r*.06,x,y,a.r);
+    grd.addColorStop(0,"#FFFFFF");grd.addColorStop(.26,e.cpk);grd.addColorStop(1,shade(e.cpk,-.5));
+    rxx.beginPath();rxx.arc(x,y,a.r,0,7);rxx.fillStyle=grd;
+    rxx.shadowColor="rgba(0,0,0,.55)";rxx.shadowBlur=a.r*.7;rxx.shadowOffsetY=a.r*.15;rxx.fill();
+    rxx.shadowBlur=0;rxx.shadowOffsetY=0;
+    if(a.r>9){rxx.font='700 '+Math.max(8,a.r*.8)+'px "DM Sans",system-ui,sans-serif';
+      rxx.textAlign="center";rxx.textBaseline="middle";
+      rxx.fillStyle=lum(e.cpk)>.58?"#0B0B12":"#FFF";rxx.fillText(a.sym,x,y);}
+  });
+  /* the moment of reaction */
+  if(p>.40&&p<.62){
+    const f=1-Math.abs(p-.51)/.11;
+    const fg=rxx.createRadialGradient(cx,cy,0,cx,cy,Math.min(RW,RH)*.5);
+    const dh=S.rx.rx.dH;
+    const tint=dh==null?"rgba(235,240,255,":(dh<0?"rgba(255,214,150,":"rgba(150,200,255,");
+    fg.addColorStop(0,tint+(f*.5).toFixed(3)+")");
+    fg.addColorStop(1,"rgba(0,0,0,0)");
+    rxx.fillStyle=fg;rxx.fillRect(0,0,RW,RH);
+  }
+  /* energy leaving or arriving */
+  if(S.rx.rx&&S.rx.rx.dH!=null&&p>0&&p<1){
+    const warm=S.rx.rx.dH<0, N=18;
+    for(let i=0;i<N;i++){
+      const ang=i/N*6.283+p*1.4;
+      const u=warm?Math.max(0,(p-.5)/.5):Math.max(0,(.5-p)/.5);
+      if(u<=0)continue;
+      const rr=warm?Math.min(RW,RH)*.16+u*Math.min(RW,RH)*.42
+                   :Math.min(RW,RH)*.58-u*Math.min(RW,RH)*.42;
+      const x=cx+Math.cos(ang)*rr,y=cy+Math.sin(ang)*rr*.85;
+      rxx.beginPath();rxx.arc(x,y,2.6,0,7);
+      rxx.fillStyle=warm?"rgba(255,186,90,"+(1-u).toFixed(2)+")"
+                        :"rgba(140,190,255,"+(1-u).toFixed(2)+")";
+      rxx.fill();
+    }
+  }
+  /* conservation caption */
+  const tIn=atomTally(S.rx.rx.in),tOut=atomTally(S.rx.rx.out);
+  const nIn=Object.keys(tIn).reduce((s,k)=>s+tIn[k],0);
+  const nOut=Object.keys(tOut).reduce((s,k)=>s+tOut[k],0);
+  rxx.font='500 12px "Roboto Mono",monospace';rxx.textAlign="center";
+  rxx.fillStyle="rgba(200,206,222,.5)";
+  rxx.fillText(nIn+" atoms in · "+nOut+" atoms out · not one created or destroyed",RW/2,RH-16);
+  if(!S.rx.playing&&p>=1){
+    rxx.fillStyle="rgba(150,231,200,.85)";
+    rxx.font='600 12px "DM Sans",system-ui,sans-serif';
+    rxx.fillText("done — press Run again to replay",RW/2,22);
+  }
+}
+function rxRun(){
+  if(!S.rx.rx)return;
+  rxBuild();
+  S.rx.playing=true;S.rx.t0=performance.now()/1000;
+  const p=$("rxPop");p.textContent=S.rx.rx.dH<0?"Energy pours out":"Energy has to be poured in";
+  p.classList.add("on");clearTimeout(p._t);p._t=setTimeout(()=>p.classList.remove("on"),2200);
+}
+function rxSet(rx){
+  S.rx.rx=rx;S.rx.picked=rx?rx.in.map(x=>x[0]):[];
+  S.rx.playing=false;rxBuild();renderRxEq();renderInspector();
+}
+function renderRxEq(){
+  const el2=$("rxEq"),rx=S.rx.rx;
+  if(rx){el2.innerHTML=eqHTML(rx);return;}
+  const pick=S.rx.picked;
+  if(!pick.length){el2.innerHTML='<span class="rx-empty">Choose what to mix — two is usually enough</span>';return;}
+  el2.innerHTML='<div class="rx-slot">'+pick.map((f,i)=>
+    '<span class="rx-tag">'+pretty(f)+'<button data-rm="'+i+'" aria-label="remove">×</button></span>').join(
+    '<span class="sp">+</span>')+'</div><span class="arrow">⟶</span><span class="ph">?</span>';
+  el2.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{
+    S.rx.picked.splice(+b.dataset.rm,1);rxTry();});
+}
+function rxTry(){
+  const found=findReaction(S.rx.picked);
+  S.rx.rx=found||null;S.rx.built=null;S.rx.playing=false;
+  if(found)rxBuild();
+  renderRxEq();renderInspector();
+}
+
+/* ============================================================
+   REACTION PANEL
+   ============================================================ */
+function rxPanel(){
+  const rx=S.rx.rx,picked=S.rx.picked;
+  let h='<div class="blk"><p class="kicker">Reactions</p>'+
+    '<h2 class="title-xl">Make something happen</h2>'+
+    '<p class="lede">Put two things together and watch the bonds actually break and reform. '+
+    'Count the atoms before and after — they always match.</p></div>';
+  if(rx){
+    const exo=rx.dH!=null&&rx.dH<0, col=rx.dH==null?"var(--pri)":(exo?"var(--warn)":"var(--a-structure)");
+    h+='<div class="blk"><p class="kicker">'+esc(rx.type)+'</p>'+
+      '<h3 class="title-l">'+esc(rx.name)+'</h3>'+
+      '<div class="mono" style="font-size:13px;color:var(--on2);margin-top:4px">'+esc(eqText(rx))+'</div></div>';
+    if(rx.dH!=null)h+='<div class="blk"><div class="energy" style="--c:'+col+'">'+
+      '<div class="v">'+(rx.dH>0?"+":"−")+Math.abs(rx.dH)+' kJ</div>'+
+      '<div class="l">'+(exo?"<b>Exothermic.</b> Energy leaves — as heat, light, or a bang."
+                             :"<b>Endothermic.</b> Energy has to be put in or it will not go.")+'</div></div></div>';
+    if(rx.see)h+='<div class="blk"><p class="kicker">What you would see</p>'+
+      '<p class="quote" style="--c:'+col+'">'+esc(rx.see)+'</p></div>';
+    h+='<div class="blk"><button class="btn" id="rxRun">'+
+      '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></svg>'+
+      'Run the reaction</button>'+
+      '<div class="btnrow" style="margin-top:8px">'+
+      '<button class="btn sec" id="rxClear">Clear</button>'+
+      '<button class="btn sec" id="rxFlip">Reverse it</button></div></div>';
+    const t=atomTally(rx.in);
+    h+='<div class="blk"><p class="kicker">Atom count</p><dl class="sheet">'+
+      Object.keys(t).sort().map(k=>rowOf(BY_SYM[k]?BY_SYM[k].name:k,String(t[k])+" in · "+
+        String(atomTally(rx.out)[k]||0)+" out",
+        (atomTally(rx.out)[k]||0)===t[k]?"q":"n")).join("")+'</dl></div>';
+  } else if(picked.length){
+    h+='<div class="blk"><div class="notice" style="--c:var(--warn)"><div>'+
+      '<b>Nothing happens.</b> These do not react together — at least not in a way this demo knows. '+
+      'Try removing one, or pick a pairing from the library below.</div></div>'+
+      '<button class="btn sec" id="rxClear" style="margin-top:12px">Clear</button></div>';
+  }
+  h+='<div class="blk"><p class="kicker">Add a reactant</p><div class="rx-shelf">';
+  RX_SHELF.forEach(f=>{
+    const on=picked.indexOf(f)>=0;
+    h+='<button class="rx-pill" style="--c:var(--pri)" data-add="'+f+'"'+(on?" disabled":"")+'>'+
+      '<span class="f">'+pretty(f)+'</span><span class="n">'+(RX_NAMES[f]||"")+'</span></button>';
+  });
+  h+='</div></div>';
+  h+='<div class="blk"><p class="kicker">Library</p><div class="stack">';
+  REACTIONS.forEach((r,i)=>{
+    h+='<button class="rx-card" data-lib="'+i+'"><div class="eq">'+esc(eqText(r))+'</div>'+
+      '<div class="nm">'+esc(r.name)+' · '+esc(r.type)+'</div></button>';
+  });
+  h+='</div></div>';
+  h+='<div class="blk"><p class="kicker">Balance your own</p>'+
+    '<input id="rxIn" class="field mono" placeholder="C3H8 + O2 -> CO2 + H2O" autocomplete="off" spellcheck="false">'+
+    '<div id="rxErr" style="color:var(--bad);font-size:12px;margin-top:7px;min-height:16px"></div>'+
+    '<button class="btn tonal" id="rxBal">Balance and build</button>'+
+    '<p class="muted" style="margin-top:9px;font-size:12px">Type any equation with an arrow. '+
+    'It gets balanced exactly, with whole numbers — no guessing.</p></div>';
+  return h;
+}
+function wireRx(){
+  const I=$("insp");
+  I.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{
+    if(S.rx.picked.length>=4){toast("Four is plenty");return;}
+    S.rx.picked.push(b.dataset.add);rxTry();});
+  I.querySelectorAll("[data-lib]").forEach(b=>b.onclick=()=>{rxSet(REACTIONS[+b.dataset.lib]);});
+  const run=$("rxRun");if(run)run.onclick=rxRun;
+  const cl=$("rxClear");if(cl)cl.onclick=()=>{S.rx.picked=[];S.rx.rx=null;S.rx.built=null;renderRxEq();renderInspector();};
+  const fl=$("rxFlip");if(fl)fl.onclick=()=>{
+    const r=S.rx.rx;
+    rxSet({in:r.out,out:r.in,dH:r.dH==null?null:-r.dH,type:"Reverse of "+r.type.toLowerCase(),
+      name:r.name+", backwards",see:"Run in reverse. Energy flows the other way too."});};
+  const bal=$("rxBal");
+  if(bal){
+    const doBal=()=>{
+      const v=($("rxIn").value||"").trim();
+      const parts=v.split(/->|=>|→|⟶|=/);
+      if(parts.length!==2){$("rxErr").textContent="Use an arrow, like  H2 + O2 -> H2O";return;}
+      const clean=side=>side.split("+").map(x=>x.trim().replace(/^\d+\s*/,"").replace(/\s+/g,"")).filter(Boolean);
+      const L=clean(parts[0]),Rt=clean(parts[1]);
+      if(!L.length||!Rt.length){$("rxErr").textContent="Both sides need at least one substance.";return;}
+      const bad=L.concat(Rt).find(f=>!parseFormula(f));
+      if(bad){$("rxErr").textContent='"'+bad+'" is not a formula I can read.';return;}
+      const res=balance(L,Rt);
+      if(!res){$("rxErr").textContent="That cannot be balanced as written. Check the products.";return;}
+      $("rxErr").textContent="";
+      rxSet({in:res.in,out:res.out,dH:null,type:"Balanced for you",name:"Your equation",
+        see:"Balanced exactly. Energy is not in the library for this one, so nothing is claimed about it."});
+      toast("Balanced");
+    };
+    bal.onclick=doBal;
+    $("rxIn").onkeydown=ev=>{if(ev.key==="Enter")doBal();};
+  }
+}
+function showRx(on){
+  S.rxMode=on;S.create=false;
+  $("btnReact").classList.toggle("on",on);
+  $("btnCreate").classList.remove("on");
+  $("sc-rx").classList.toggle("live",on);
+  if(on){$("sc-scan").classList.remove("live");$("sc-view").classList.remove("live");
+    rxFit();renderRxEq();$("rxFoot").innerHTML=
+      '<span>atoms are conserved — <span class="hot">watch the count</span></span>'+
+      '<span>bonds break in the middle, then reform</span>';}
+  renderInspector();
+  if(!on)go(S.scale);
+}
+$("btnReact").onclick=()=>showRx(!S.rxMode);
+const _go=go;
+go=function(id){
+  if(S.rxMode){S.rxMode=false;$("btnReact").classList.remove("on");$("sc-rx").classList.remove("live");}
+  _go(id);
+};
+const _ri=renderInspector;
+renderInspector=function(){
+  if(S.rxMode){$("insp").innerHTML=rxPanel();wireRx();return;}
+  _ri();
+};
+$("btnCreate").onclick=()=>{
+  if(S.rxMode)showRx(false);
+  S.create=!S.create;$("btnCreate").classList.toggle("on",S.create);renderInspector();
+};
+function rxFrame(){if(S.rxMode)rxDraw(performance.now()/1000);requestAnimationFrame(rxFrame);}
+requestAnimationFrame(rxFrame);
+
+/* ============================================================
+   CLAUDE CONNECTION  —  honest states + a way to retry
+   ============================================================ */
+let CLAUDE_STATE="checking";
+async function probeClaude(ask){
+  if(!window.claude||typeof window.claude.use!=="function"){CLAUDE_STATE="absent";SAMPLE=null;return;}
+  if(ask){
+    const perms=await window.claude.use("permissions").catch(()=>null);
+    if(perms&&typeof perms.request==="function")
+      await perms.request(["sample"]).catch(()=>{});
+  }
+  const s=await window.claude.use("sample").catch(()=>null);
+  SAMPLE=s||null;
+  if(!s){CLAUDE_STATE="unavailable";IMGOK=false;return;}
+  const lim=await s.limits().catch(()=>null);
+  IMGOK=!!(lim&&lim.images);
+  CLAUDE_STATE=IMGOK?"ready":"noimages";
+}
+const NICO='<svg class="nico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8.5v4M12 16h.01"/></svg>';
+renderScanNote=function(){
+  const n=$("scanNote");if(!n)return;
+  if(CLAUDE_STATE==="checking"){n.innerHTML="";return;}
+  if(CLAUDE_STATE==="ready"){
+    n.innerHTML=SHOT?'<div class="notice" style="--c:var(--ok)">'+NICO+
+      '<div><b>Ready to identify.</b> This runs on your own Claude account and uses a little of your usage.</div></div>':"";
+    return;
+  }
+  const copy={
+    absent:["Lens is off in this view.","This page is open outside a Claude viewer, so it cannot reach Claude at all. Everything below the first screen still works."],
+    unavailable:["Claude is not connected.","Photo recognition needs permission to use Claude on your account. Nothing else on this page is affected."],
+    noimages:["This viewer cannot send photos.","Claude is reachable, but images are not supported here. Try opening the artifact in a browser tab."]
+  }[CLAUDE_STATE]||["Lens is off.",""];
+  n.innerHTML='<div class="notice" style="--c:var(--warn)">'+NICO+'<div><b>'+esc(copy[0])+'</b> '+esc(copy[1])+
+    (CLAUDE_STATE==="unavailable"?'<div style="margin-top:10px"><button class="btn tonal" id="rcCon" style="width:auto;padding:8px 16px;font-size:13px">Connect Claude</button></div>':"")+
+    '</div></div>';
+  const rc=$("rcCon");
+  if(rc)rc.onclick=async()=>{
+    rc.disabled=true;rc.textContent="Asking…";
+    await probeClaude(true);
+    renderScanButtons();
+    toast(CLAUDE_STATE==="ready"?"Connected — the Lens is live":"Still not available in this view");
+  };
+};
+probeClaude(false).then(()=>{renderScanButtons();});
+</script>
+<style>
+.viewport img.fit{object-fit:contain;background:#07090E}
+.selbox{position:absolute;border:2px solid #6EE7B7;border-radius:6px;
+  box-shadow:0 0 0 9999px rgba(6,8,14,.55);pointer-events:none}
+.selbox::after{content:"";position:absolute;inset:-2px;border-radius:6px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.55)}
+.selhint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+  background:rgba(12,15,22,.9);color:#E6E9F2;border-radius:999px;padding:6px 14px;
+  font-size:12px;pointer-events:none;white-space:nowrap}
+.seltarget{position:absolute;inset:0;cursor:crosshair;touch-action:none}
+.srcline{display:flex;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line-soft);font-size:13px}
+.srcline:last-child{border-bottom:0}
+.srcline a{color:var(--pri);text-decoration:none;font-weight:600}
+.srcline a:hover{text-decoration:underline}
+.srcline .w{color:var(--on3);font-size:11.5px}
+.steps{counter-reset:st;display:flex;flex-direction:column;gap:10px}
+.step{display:flex;gap:11px;align-items:flex-start}
+.step .n{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--pri-soft);
+  color:var(--pri);font-size:11.5px;font-weight:700;display:grid;place-items:center;margin-top:1px}
+.step .t{font-size:13px;line-height:1.55}
+.step .t b{display:block;font-weight:700;margin-bottom:1px}
+</style>
+<script>
+"use strict";
+/* ============================================================
+   CONNECTION — corrected diagnosis
+   ============================================================ */
+let DIAG={};
+probeClaude=async function(ask){
+  const framed=(function(){try{return window.self!==window.top;}catch(e){return true;}})();
+  DIAG={framed,hasClaude:!!window.claude,hasUse:!!(window.claude&&typeof window.claude.use==="function")};
+  if(!DIAG.hasUse){CLAUDE_STATE=framed?"unavailable":"standalone";SAMPLE=null;IMGOK=false;return;}
+  if(ask){
+    const perms=await window.claude.use("permissions").catch(()=>null);
+    if(perms&&typeof perms.request==="function")await perms.request(["sample"]).catch(()=>{});
+  }
+  const s=await window.claude.use("sample").catch(()=>null);
+  SAMPLE=s||null;DIAG.sample=!!s;
+  if(!s){CLAUDE_STATE=framed?"unavailable":"standalone";IMGOK=false;return;}
+  const lim=await s.limits().catch(()=>null);
+  IMGOK=!!(lim&&lim.images);DIAG.images=IMGOK;
+  CLAUDE_STATE=IMGOK?"ready":"noimages";
+};
+renderScanNote=function(){
+  const n=$("scanNote");if(!n)return;
+  if(CLAUDE_STATE==="checking"){n.innerHTML="";return;}
+  if(CLAUDE_STATE==="ready"){
+    n.innerHTML=SHOT?'<div class="notice" style="--c:var(--ok)">'+NICO+
+      '<div><b>Ready.</b> Drag a box on the photo to scan just one part, or identify the whole thing. '+
+      'This runs on your own Claude account.</div></div>':"";
+    return;}
+  const copy={
+    standalone:["This page is open in its own tab.",
+      "The Lens can only reach Claude when the page runs inside Claude — in the chat panel or the artifact viewer. "+
+      "Open it from your Claude conversation and the camera will work. Everything else on this page works here."],
+    unavailable:["Claude has not been allowed yet.",
+      "Photo recognition needs your permission to use Claude on this page."],
+    noimages:["Photos are not supported in this view.",
+      "Claude is reachable but this viewer cannot send images to it."]
+  }[CLAUDE_STATE]||["The Lens is off.",""];
+  n.innerHTML='<div class="notice" style="--c:var(--warn)">'+NICO+'<div><b>'+esc(copy[0])+'</b> '+esc(copy[1])+
+    (CLAUDE_STATE==="unavailable"?'<div style="margin-top:10px"><button class="btn tonal" id="rcCon" '+
+      'style="width:auto;padding:8px 16px;font-size:13px">Allow Claude</button></div>':"")+
+    '<div style="margin-top:9px;font-size:11px;color:var(--stage-on2);font-family:var(--ff-m)">'+
+    'diagnostic · framed:'+(DIAG.framed?"yes":"no")+' · api:'+(DIAG.hasUse?"yes":"no")+
+    ' · sample:'+(DIAG.sample?"yes":"no")+' · images:'+(DIAG.images?"yes":"no")+'</div>'+
+    '</div></div>';
+  const rc=$("rcCon");
+  if(rc)rc.onclick=async()=>{rc.disabled=true;rc.textContent="Asking…";
+    await probeClaude(true);renderScanButtons();
+    toast(CLAUDE_STATE==="ready"?"Connected — the Lens is live":"Still unavailable in this view");};
+};
+
+/* ============================================================
+   REGION SELECT
+   ============================================================ */
+let SEL=null,SELimg=null;
+showShot=function(blob){
+  stopCam();SHOT=blob;SEL=null;
+  const url=URL.createObjectURL(blob);
+  vp.innerHTML='<img class="fit" alt="What you are about to scan" src="'+url+'">'+
+    '<div class="seltarget" id="selT"></div><div class="selhint">Drag a box to scan just one part</div>';
+  const im=vp.querySelector("img");
+  im.onload=()=>{SELimg={w:im.naturalWidth,h:im.naturalHeight};};
+  const T=$("selT");
+  let a=null;
+  T.addEventListener("pointerdown",ev=>{
+    const r=vp.getBoundingClientRect();
+    a={x:ev.clientX-r.left,y:ev.clientY-r.top};
+    T.setPointerCapture(ev.pointerId);
+  });
+  T.addEventListener("pointermove",ev=>{
+    if(!a)return;
+    const r=vp.getBoundingClientRect();
+    const x=ev.clientX-r.left,y=ev.clientY-r.top;
+    SEL={x:Math.min(a.x,x),y:Math.min(a.y,y),w:Math.abs(x-a.x),h:Math.abs(y-a.y)};
+    drawSel();
+  });
+  const end=()=>{a=null;
+    if(SEL&&(SEL.w<24||SEL.h<24)){SEL=null;drawSel();}
+    renderScanButtons();};
+  T.addEventListener("pointerup",end);T.addEventListener("pointercancel",end);
+  renderScanButtons();
+};
+function drawSel(){
+  let b=vp.querySelector(".selbox");
+  if(!SEL){if(b)b.remove();const h=vp.querySelector(".selhint");if(h)h.textContent="Drag a box to scan just one part";return;}
+  if(!b){b=document.createElement("div");b.className="selbox";vp.appendChild(b);}
+  b.style.left=SEL.x+"px";b.style.top=SEL.y+"px";b.style.width=SEL.w+"px";b.style.height=SEL.h+"px";
+  const h=vp.querySelector(".selhint");
+  if(h)h.textContent="Scanning just this part — drag again to change it";
+}
+function cropShot(){
+  return new Promise(res=>{
+    if(!SHOT)return res(null);
+    if(!SEL||!SELimg)return res(SHOT);
+    const img=new Image();
+    img.onload=()=>{
+      const r=vp.getBoundingClientRect();
+      const sc=Math.min(r.width/img.naturalWidth,r.height/img.naturalHeight);
+      const dw=img.naturalWidth*sc,dh=img.naturalHeight*sc;
+      const dx=(r.width-dw)/2,dy=(r.height-dh)/2;
+      let sx=(SEL.x-dx)/sc, sy=(SEL.y-dy)/sc, sw=SEL.w/sc, sh=SEL.h/sc;
+      sx=Math.max(0,Math.min(img.naturalWidth-1,sx));
+      sy=Math.max(0,Math.min(img.naturalHeight-1,sy));
+      sw=Math.max(8,Math.min(img.naturalWidth-sx,sw));
+      sh=Math.max(8,Math.min(img.naturalHeight-sy,sh));
+      const c=document.createElement("canvas");
+      const out=Math.min(900,Math.max(sw,sh));
+      const k=out/Math.max(sw,sh);
+      c.width=Math.round(sw*k);c.height=Math.round(sh*k);
+      c.getContext("2d").drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);
+      c.toBlob(b=>res(b||SHOT),"image/jpeg",.9);
+    };
+    img.onerror=()=>res(SHOT);
+    img.src=URL.createObjectURL(SHOT);
+  });
+}
+const _rsb=renderScanButtons;
+renderScanButtons=function(){
+  _rsb();
+  if(SHOT){
+    const box=$("scanBtns"),first=box.firstChild;
+    if(first)first.lastChild.textContent=SEL?" Identify the selected part":" Identify this";
+    if(SEL){
+      const clr=document.createElement("button");
+      clr.className="btn sec";clr.textContent="Whole image";
+      clr.onclick=()=>{SEL=null;drawSel();renderScanButtons();};
+      box.appendChild(clr);
+    }
+  }
+};
+
+/* ============================================================
+   LENS v2 — region aware, with provenance and a make-route
+   ============================================================ */
+const LENS2=
+"You are the recognition step of a chemistry app for children aged about 10 to 15.\n"+
+"The image is either a whole photo or a region a child cropped out of one. Identify the single "+
+"most prominent object IN THIS IMAGE.\n\n"+
+"Reply with ONLY a JSON object of exactly this shape:\n"+
+'{"label":"Lemon","real":true,"kind":"fruit",'+
+'"blurb":"One or two vivid plain-English sentences, at most 40 words.",'+
+'"parts":[{"formula":"H2O","pct":88},{"formula":"C6H8O7","pct":6}],'+
+'"howMade":[{"step":"Grown","detail":"One short plain sentence."}],'+
+'"caution":""}\n\n'+
+"Rules:\n"+
+"- Every \"formula\" is a real chemical formula from standard element symbols: H2O, NaCl, C6H12O6, SiO2, Fe, CaCO3. "+
+"For an object of one metal or element use the bare symbol.\n"+
+"- 1 to 5 substances, most abundant first, pct roughly summing to 100.\n"+
+"- \"howMade\": 2 to 5 steps describing at an ENCYCLOPEDIC level how this thing comes to exist or is "+
+"manufactured industrially. Plain language a 12-year-old follows.\n"+
+"- IMPORTANT: never give quantities, reagent recipes, temperatures, or a procedure anyone could actually "+
+"follow. Describe the route conceptually only. This is for children.\n"+
+"- \"caution\": one short sentence ONLY if this involves something genuinely hazardous, otherwise \"\".\n"+
+"- If the subject is fictional, imaginary or not a real material, set \"real\" to false and give your best "+
+"playful guess anyway.\n"+
+"- If you truly cannot tell, use label \"Unclear\" and an empty parts array.\n"+
+"- No text outside the JSON.";
+
+identify=async function(){
+  if(!SAMPLE||!SHOT)return;
+  const prev=vp.innerHTML;
+  const busy=document.createElement("div");
+  busy.className="busy";
+  busy.innerHTML='<div><div class="ring"></div><div style="font-size:13px">'+
+    (SEL?"Looking at that part…":"Looking at it…")+'</div>'+
+    '<div style="font-size:11.5px;opacity:.7;margin-top:5px">a few seconds</div></div>';
+  vp.appendChild(busy);
+  try{
+    const blob=await cropShot();
+    const data=await SAMPLE.json(LENS2,{images:blob,modelTier:"default"});
+    const label=String(data&&data.label||"").trim();
+    const raw=Array.isArray(data&&data.parts)?data.parts:[];
+    const parts=[];
+    raw.forEach(p=>{
+      const f=String(p&&p.formula||"").replace(/\s+/g,"");
+      if(!f||!parseFormula(f))return;
+      parts.push([f,Math.max(.01,Math.min(100,Number(p.pct)||0))]);
+    });
+    if(!label||label.toLowerCase()==="unclear"||!parts.length){
+      busy.remove();
+      $("scanNote").innerHTML='<div class="notice" style="--c:var(--warn)">'+NICO+
+        '<div><b>No clear match.</b> Try a closer, better-lit shot — or drag a box around one '+
+        'object instead of the whole scene.</div></div>';
+      toast("Could not read that one");
+      return;
+    }
+    const steps=(Array.isArray(data.howMade)?data.howMade:[]).slice(0,5)
+      .map(s=>({step:String(s&&s.step||"").slice(0,60),detail:String(s&&s.detail||"").slice(0,200)}))
+      .filter(s=>s.step||s.detail);
+    const sb=substanceOf(parts[0][0]);
+    S.specimen={label,blurb:String(data.blurb||"").slice(0,240)||"Scanned with the camera.",
+      c:KIND[sb.kind][2],source:"lens",parts,howMade:steps,
+      real:data.real!==false,kind:String(data.kind||"").slice(0,40),
+      caution:String(data.caution||"").slice(0,180),region:!!SEL};
+    const dropped=raw.length-parts.length;
+    stopCam();go("object");
+    toast(dropped>0?("Identified · "+dropped+" unreadable formula"+(dropped>1?"s":"")+" skipped")
+                   :("Identified: "+label));
+  }catch(e){
+    busy.remove();
+    const msg={not_granted:"You declined Claude access, so the Lens is off. The specimens still work.",
+      rate_limited:"Too many requests just now. Wait a moment and try again.",
+      images_unavailable:"This viewer cannot send photos to Claude.",
+      image_rejected:"That image could not be read. Try a smaller or clearer photo.",
+      invalid_json:"The answer came back garbled. Try once more.",
+      refused:"Claude declined to identify that image.",
+      cancelled:""}[e&&e.code]||"Something went wrong reaching Claude. Try again.";
+    if(msg)$("scanNote").innerHTML='<div class="notice" style="--c:var(--bad)">'+NICO+
+      '<div><b>Lens failed.</b> '+esc(msg)+'</div></div>';
+    vp.innerHTML=prev;
+  }
+};
+
+/* ---------- sources: real reference works + deterministic lookups ---------- */
+const REFWORKS=[
+ ["NIST Chemistry WebBook","Thermochemical and spectral data, US National Institute of Standards and Technology","https://webbook.nist.gov/chemistry/"],
+ ["PubChem","Open chemical database, US National Library of Medicine","https://pubchem.ncbi.nlm.nih.gov/"],
+ ["IUPAC Gold Book","The agreed definitions of chemical terminology","https://goldbook.iupac.org/"],
+ ["CRC Handbook of Chemistry and Physics","The standard printed reference for physical constants","https://hbcp.chemnetbase.com/"],
+ ["Review of Particle Physics","Particle Data Group — the source for quark and electron figures","https://pdg.lbl.gov/"]
+];
+function sourceLinks(formula,name){
+  const f=encodeURIComponent(formula), n=encodeURIComponent(name||formula);
+  return [
+   ["PubChem","look up "+formula,"https://pubchem.ncbi.nlm.nih.gov/#query="+f],
+   ["NIST WebBook","measured data","https://webbook.nist.gov/cgi/cbook.cgi?Formula="+f+"&NoIon=on&Units=SI"],
+   ["Wikipedia","plain-language overview","https://en.wikipedia.org/w/index.php?search="+n]
+  ];
+}
+function srcBlock(formula,name){
+  let h='<div class="blk"><p class="kicker">Check it yourself</p>';
+  sourceLinks(formula,name).forEach(([t,w,u])=>{
+    h+='<div class="srcline"><a href="'+u+'" target="_blank" rel="noopener noreferrer">'+t+'</a>'+
+       '<span class="w">'+w+'</span></div>';});
+  h+='<p class="muted" style="margin-top:10px;font-size:11.5px">These are live searches on real databases, '+
+     'not citations I generated. Nothing on this page invents a reference.</p></div>';
+  return h;
+}
+const _panelObject=panelObject;
+panelObject=function(){
+  const sp=S.specimen;
+  if(!sp)return _panelObject();
+  let h=_panelObject();
+  const col=sp.c||"var(--pri)";
+  let extra="";
+  if(sp.real===false)extra+='<div class="blk"><div class="notice" style="--c:var(--a-atom)">'+NICO+
+    '<div><b>This one is not real.</b> Claude could not match it to an actual material, so what follows '+
+    'is an informed guess about something imaginary. Treat it as a story, not chemistry.</div></div></div>';
+  if(sp.region)extra+='<div class="blk"><p class="muted" style="font-size:12px">'+
+    'Read from the part of the photo you boxed, not the whole image.</p></div>';
+  if(sp.caution)extra+='<div class="blk"><div class="notice" style="--c:var(--bad)">'+NICO+
+    '<div><b>Careful.</b> '+esc(sp.caution)+'</div></div></div>';
+  if(sp.howMade&&sp.howMade.length){
+    extra+='<div class="blk"><p class="kicker">How it is made</p><div class="steps">';
+    sp.howMade.forEach((s,i)=>{
+      extra+='<div class="step"><div class="n">'+(i+1)+'</div><div class="t">'+
+        (s.step?'<b>'+esc(s.step)+'</b>':"")+esc(s.detail)+'</div></div>';});
+    extra+='</div><p class="muted" style="margin-top:11px;font-size:11.5px">Described at a '+
+      'library level on purpose — no quantities, no recipe.</p></div>';
+  }
+  extra+=srcBlock(sp.parts[0][0],sp.label);
+  return h+extra;
+};
+const _panelSubstance=panelSubstance;
+panelSubstance=function(){
+  const sb=S.substance;
+  return _panelSubstance()+(sb?srcBlock(sb.formula,sb.name):"");
+};
+/* the v2 probe must run after this block replaced the v1 one */
+probeClaude(false).then(()=>{renderScanButtons();});
+
+const _panelAtom=panelAtom;
+panelAtom=function(){
+  const out=_panelAtom();
+  if(S.electron||!S.element)return out;
+  return out+'<div class="blk"><p class="kicker">Check it yourself</p>'+
+    '<div class="srcline"><a href="https://pubchem.ncbi.nlm.nih.gov/element/'+S.element.z+
+    '" target="_blank" rel="noopener noreferrer">PubChem element '+S.element.z+'</a>'+
+    '<span class="w">'+esc(S.element.name)+'</span></div>'+
+    '<div class="srcline"><a href="https://webbook.nist.gov/cgi/cbook.cgi?Formula='+S.element.sym+
+    '&NoIon=on&Units=SI" target="_blank" rel="noopener noreferrer">NIST WebBook</a>'+
+    '<span class="w">measured data</span></div></div>';
+};
+</script>
+<style>
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.a11y{position:absolute;inset:0;pointer-events:none}
+.a11y button{
+  position:absolute;pointer-events:none;background:none;border:0;padding:0;
+  border-radius:50%;color:transparent;font-size:1px;
+}
+.a11y button:focus-visible{
+  outline:3px solid #6EE7B7;outline-offset:3px;
+  background:rgba(110,231,183,.22);box-shadow:0 0 0 6px rgba(110,231,183,.2);
+}
+.a11y-help{
+  position:absolute;left:50%;top:12px;transform:translateX(-50%);
+  background:rgba(18,21,27,.96);color:#EDEFF6;border:1px solid rgba(255,255,255,.18);
+  border-radius:10px;padding:8px 15px;font-size:12.5px;white-space:nowrap;
+  opacity:0;transition:.2s;pointer-events:none;z-index:9;
+}
+.a11y:focus-within .a11y-help{opacity:1}
+</style>
+<script>
+"use strict";
+/* ============================================================
+   ACCESSIBILITY — every canvas object mirrored as a real button
+   ============================================================ */
+const A11Y=$("a11y"),ANN=$("ann");
+A11Y.insertAdjacentHTML("beforeend",
+  '<div class="a11y-help">Tab through the objects · Enter to open</div>');
+let a11ySig="",a11yBtns=[];
+function announce(msg){ANN.textContent="";setTimeout(()=>{ANN.textContent=msg;},40);}
+
+function ordinal(i,n){return (i+1)+" of "+n;}
+function a11yLabel(h,n){
+  const el2=S.element;
+  switch(h.kind){
+    case "part":{
+      const pr=S.specimen&&S.specimen.parts[h.i];
+      if(!pr)return "Substance";
+      const sb=substanceOf(pr[0]);
+      return sb.name+", "+pr[1]+" percent, formula "+spellFormula(pr[0])+
+        ". Open this substance.";}
+    case "mol":
+      return S.substance.name+" molecule "+ordinal(h.i,n)+". Isolate one molecule.";
+    case "atom":{
+      const e=BY_SYM[h.sym];
+      return e?(e.name+" atom"+(n>1?", "+ordinal(h.i,n):"")+". Open this atom."):"Atom";}
+    case "e":{
+      const list=electronList(S.nE),x=list[h.idx];
+      if(!x)return "Electron";
+      return "Electron "+ordinal(h.idx,S.nE)+", shell "+(SHELL_LETTER[x.n-1]||x.n)+
+        ", "+x.sub+" orbital, spin "+x.spin+". Open this electron.";}
+    case "nuc":
+      return "Nucleus, "+S.nP+" protons and "+S.nN+" neutrons. Go inside the nucleus.";
+    case "nucleon":{
+      const isP=h.i<S.nP;
+      return (isP?"Proton ":"Neutron ")+(isP?ordinal(h.i,S.nP):ordinal(h.i-S.nP,S.nN))+
+        ". Go inside it and see its quarks.";}
+    case "q":{
+      const nu=S.nucleon,flav=nu&&nu.type==="p"?["u","u","d"]:["u","d","d"];
+      const Q=QUARKS[flav[h.i]];
+      return Q?(Q.name+", charge "+Q.q+". Open this quark."):"Quark";}
+  }
+  return "Object";
+}
+function spellFormula(f){
+  return String(f).replace(/([A-Z][a-z]?)(\d*)/g,(m,el2,n)=>
+    (BY_SYM[el2]?BY_SYM[el2].name:el2)+(n?" "+n:"")+" ").trim();
+}
+function sceneSummary(){
+  switch(S.scale){
+    case "object":return S.specimen?(S.specimen.label+": "+S.specimen.parts.length+
+      " substances shown as bubbles sized by how much there is."):"Nothing scanned yet.";
+    case "substance":return "Many "+S.substance.name+" units together.";
+    case "molecule":return "One "+S.substance.name+" molecule, "+
+      (S.struct?S.struct.atoms.length+" atoms":"a repeating structure")+".";
+    case "atom":return (S.element?S.element.name:"An")+" atom: nucleus at the centre with "+
+      S.nE+" electrons in "+shellsOfList(electronList(S.nE)).filter(x=>x).length+" shells.";
+    case "nucleus":return "Nucleus with "+S.nP+" protons and "+S.nN+" neutrons.";
+    case "quark":return "Inside a "+(S.nucleon&&S.nucleon.type==="p"?"proton":"neutron")+
+      ": three quarks bound by gluons.";
+  }
+  return "";
+}
+function syncA11y(){
+  const sig=S.scale+"|"+HOT.map(h=>h.kind+":"+(h.i!=null?h.i:h.idx)).join(",");
+  if(sig!==a11ySig){
+    a11ySig=sig;
+    a11yBtns.forEach(b=>b.remove());a11yBtns=[];
+    const n=HOT.length;
+    HOT.forEach((h,k)=>{
+      const b=document.createElement("button");
+      b.type="button";b.textContent=a11yLabel(h,n);
+      b.onclick=()=>{const cur=HOT[k]||h;if(cur.go){cur.go();announce(sceneSummary());}};
+      A11Y.appendChild(b);a11yBtns.push(b);
+    });
+    cv.setAttribute("aria-label",sceneSummary()+
+      " Its "+n+" clickable objects are listed as buttons after this canvas.");
+  }
+  for(let k=0;k<a11yBtns.length&&k<HOT.length;k++){
+    const h=HOT[k],b=a11yBtns[k],d=Math.max(22,h.r*2);
+    b.style.left=(h.x-d/2)+"px";b.style.top=(h.y-d/2)+"px";
+    b.style.width=d+"px";b.style.height=d+"px";
+  }
+}
+let lastSync=0;
+(function a11yLoop(ts){
+  if(ts-lastSync>140){lastSync=ts;
+    if($("sc-view").classList.contains("live")){try{syncA11y();}catch(e){}}}
+  requestAnimationFrame(a11yLoop);
+})(0);
+const _go2=go;
+go=function(id){_go2(id);announce(sceneSummary());};
+</script>
