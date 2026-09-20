@@ -49,6 +49,14 @@ molecules on a physics bench.
 Two variants exist because the artifact build can call Claude for photo recognition, and the static
 build cannot. No build step, no dependencies — every page is a single self-contained HTML file.
 
+## Deploy
+
+    ./deploy.sh
+
+Uploads and publishes to Netlify. It is two steps because `netlify deploy --prod`
+returns Forbidden on this account, while a draft upload plus an API publish works.
+Run it from anywhere; it changes into the right directory itself.
+
 ## Run it
 
     cd matter-lab-site && python3 -m http.server 8000
