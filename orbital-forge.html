@@ -281,6 +281,12 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .mol-name{font-size:13px;color:var(--copper);margin-top:3px;min-height:20px}
 .mol-name.unknown{color:var(--steel);font-style:italic}
 
+.btn-lens{
+  display:block;width:100%;text-align:center;margin-top:12px;padding:11px 14px;
+  border-radius:9px;background:var(--balmer);color:#0A0E1A;font-weight:600;font-size:12.5px;
+  text-decoration:none;transition:.15s;
+}
+.btn-lens:hover{filter:brightness(1.1);transform:translateY(-1px)}
 .toast{
   position:absolute;left:50%;bottom:22px;transform:translateX(-50%) translateY(12px);
   background:var(--panel-2);border:1px solid var(--rim-hi);border-radius:8px;
@@ -1221,6 +1227,32 @@ function hillFormula(){
   else keys.sort().forEach(k=>out.push([k,c[k]]));
   return out.map(([k,n])=>k+(n>1?n:"")).join("");
 }
+/* ---- structural analysis + hand-off to Matter Lens ---- */
+const LENS_URL_ABS="https://claude.ai/artifact/TAwRzPPgkaN1pTprdxczL6";
+function lensTarget(){return /forge/i.test(location.pathname)?"lens.html":LENS_URL_ABS;}
+function buildComponents(){
+  const n=B.atoms.length,seen=new Array(n).fill(false),out=[],adj={};
+  B.bonds.forEach(b=>{(adj[b.a]=adj[b.a]||[]).push(b.b);(adj[b.b]=adj[b.b]||[]).push(b.a);});
+  for(let i=0;i<n;i++){
+    if(seen[i])continue;
+    const q=[i],c=[];seen[i]=true;
+    while(q.length){const k=q.pop();c.push(k);
+      (adj[k]||[]).forEach(j=>{if(!seen[j]){seen[j]=true;q.push(j);}});}
+    out.push(c.sort((x,y)=>x-y));
+  }
+  return out;
+}
+function encodeBuild(){
+  return "#b="+B.atoms.map(x=>x.e.sym).join(",")+";"+
+         B.bonds.map(x=>x.a+"-"+x.b+"-"+x.o).join(",");
+}
+function analyseBuild(){
+  const f=hillFormula(); if(!f)return null;
+  const comps=buildComponents();
+  const open=B.atoms.reduce((t,a,i)=>t+freeValence(i),0);
+  return {formula:f,known:!!MOLS[f],parts:comps.length,open:open,
+    mass:B.atoms.reduce((t,a)=>t+a.e.mass,0)};
+}
 function updateReadout(){
   const f=hillFormula();
   el("bFormula").innerHTML=f?f.replace(/(\d+)/g,"<sub>$1</sub>"):"&mdash;";
@@ -1237,10 +1269,35 @@ function updateReadout(){
     row("Molar mass",B.atoms.length?mass.toFixed(3)+" g/mol":"—")+
     row("Unfilled valence",String(open))+
     row("Bond character",spread?(spread>1.7?"ionic":spread>0.4?"polar covalent":"nonpolar"):"—");
-  el("bNote").innerHTML='<p class="eyebrow">Note</p><p class="fact" style="--c:'+
+  const an=analyseBuild();
+  let noteHTML='<p class="eyebrow">Note</p><p class="fact" style="--c:'+
     (m?"var(--copper)":"var(--rim-hi)")+'">'+
     (m?m[1]:open===0&&B.atoms.length?"Every valence is satisfied. This is a legal structure — just not one in my library."
       :"Bond atoms until no faint valence dots remain and the structure is complete.")+'</p>';
+  if(an){
+    const verdict = an.known
+      ? ["Known substance","var(--copper)","This one is real, and it is in the library."]
+      : an.open>0
+        ? ["Unfinished","var(--sodium)","Some atoms still have unused bonds, so this is not a finished molecule."]
+        : an.parts>1
+          ? ["Separate pieces","var(--sodium)","This is "+an.parts+" molecules sitting near each other, not one."]
+          : ["Not a known compound","var(--strontium)",
+             "Every valence works, so it is a legal structure — but it is not a substance I recognise. "+
+             "Plenty of legal structures do not exist in nature, or fall apart the instant they form."];
+    noteHTML+='<p class="eyebrow" style="margin-top:16px">Structure analysis</p><dl class="props">'+
+      row("Formula",an.formula)+
+      row("Verdict",'<span style="color:'+verdict[1]+'">'+verdict[0]+'</span>')+
+      row("Separate molecules",String(an.parts))+
+      row("Unfilled valence",String(an.open))+
+      row("Molar mass",an.mass.toFixed(3)+" g/mol")+
+      '</dl><p class="fact" style="--c:'+verdict[1]+';margin-top:10px">'+verdict[2]+'</p>'+
+      '<a class="btn-lens" href="'+lensTarget()+encodeBuild()+'" target="_blank" rel="noopener noreferrer">'+
+      'Explore this in Matter Lens →</a>'+
+      '<p style="font-size:10.5px;color:var(--steel);margin:7px 0 0;line-height:1.5">'+
+      'Opens your exact structure — same atoms, same bonds — so you can go down through '+
+      'one atom to its nucleus and quarks.</p>';
+  }
+  el("bNote").innerHTML=noteHTML;
   el("rigStat").innerHTML=f?('bench <b>'+f+'</b>'):'bench <b>clear</b>';
   const sig=new Set();
   components().forEach(c=>{

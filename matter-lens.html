@@ -3029,3 +3029,111 @@ let lastSync=0;
 const _go2=go;
 go=function(id){_go2(id);announce(sceneSummary());};
 </script>
+<script>
+"use strict";
+/* ============================================================
+   IMPORT A BUILD FROM ORBITAL FORGE
+   URL form:  #b=C,Br,Br,O,O;0-1-1,0-2-1,0-3-2,0-4-2
+   ============================================================ */
+/* Same compound list Orbital Forge uses, generated from it so the two tools
+   never disagree about whether something is a real substance. */
+const KNOWN_COMPOUNDS={"H2O":"Water","H2O2":"Hydrogen peroxide","H2":"Hydrogen gas","O2":"Oxygen gas","O3":"Ozone","N2":"Nitrogen gas","Cl2":"Chlorine gas","F2":"Fluorine gas","Br2":"Bromine","I2":"Iodine","CO2":"Carbon dioxide","CO":"Carbon monoxide","CH4":"Methane","C2H6":"Ethane","C2H4":"Ethene","C2H2":"Ethyne","C3H8":"Propane","C4H10":"Butane","C6H6":"Benzene","C6H12O6":"Glucose","C2H6O":"Ethanol","CH4O":"Methanol","C2H4O2":"Acetic acid","CH2O":"Formaldehyde","C3H6O":"Acetone","NH3":"Ammonia","HCl":"Hydrogen chloride","HF":"Hydrogen fluoride","H2S":"Hydrogen sulfide","SO2":"Sulfur dioxide","SO3":"Sulfur trioxide","H2SO4":"Sulfuric acid","HNO3":"Nitric acid","NO":"Nitric oxide","NO2":"Nitrogen dioxide","N2O":"Nitrous oxide","NaCl":"Sodium chloride","NaOH":"Sodium hydroxide","NaHCO3":"Sodium bicarbonate","KCl":"Potassium chloride","CaCO3":"Calcium carbonate","CaO":"Calcium oxide","MgO":"Magnesium oxide","Fe2O3":"Iron(III) oxide","SiO2":"Silicon dioxide","CHCl3":"Chloroform","CCl4":"Carbon tetrachloride","CH3Cl":"Chloromethane","C8H10N4O2":"Caffeine","C9H8O4":"Aspirin","PH3":"Phosphine","SiH4":"Silane","BF3":"Boron trifluoride","H3PO4":"Phosphoric acid","HCN":"Hydrogen cyanide","LiF":"Lithium fluoride","AlCl3":"Aluminium chloride","TiO2":"Titanium dioxide","ZnO":"Zinc oxide","CuO":"Copper(II) oxide","KMnO4":"Potassium permanganate","NH4Cl":"Ammonium chloride","C2H5NO2":"Glycine","CS2":"Carbon disulfide","N2H4":"Hydrazine"};
+function hillFromAtoms(atoms){
+  const c={};atoms.forEach(s=>c[s]=(c[s]||0)+1);
+  const keys=Object.keys(c),out=[];
+  if(c.C){out.push(["C",c.C]);if(c.H)out.push(["H",c.H]);
+    keys.filter(k=>k!=="C"&&k!=="H").sort().forEach(k=>out.push([k,c[k]]));}
+  else keys.sort().forEach(k=>out.push([k,c[k]]));
+  return out.map(x=>x[0]+(x[1]>1?x[1]:"")).join("");
+}
+function buildStats(st){
+  const n=st.atoms.length,adj={},seen=new Array(n).fill(false),comps=[];
+  const used=new Array(n).fill(0);
+  st.bonds.forEach(b=>{(adj[b[0]]=adj[b[0]]||[]).push(b[1]);(adj[b[1]]=adj[b[1]]||[]).push(b[0]);
+    used[b[0]]+=b[2];used[b[1]]+=b[2];});
+  for(let i=0;i<n;i++){
+    if(seen[i])continue;
+    const q=[i],c=[];seen[i]=true;
+    while(q.length){const k=q.pop();c.push(k);
+      (adj[k]||[]).forEach(j=>{if(!seen[j]){seen[j]=true;q.push(j);}});}
+    comps.push(c);
+  }
+  let open=0,over=0;
+  st.atoms.forEach((s,i)=>{
+    const v=BY_SYM[s]?BY_SYM[s].valence:0;
+    if(used[i]>v)over++; else open+=(v-used[i]);
+  });
+  const orders={1:0,2:0,3:0};st.bonds.forEach(b=>orders[b[2]]++);
+  return {parts:comps.length,open:open,over:over,orders:orders};
+}
+function importBuild(){
+  const m=(location.hash||"").match(/^#b=([^;]*);?(.*)$/);
+  if(!m)return false;
+  const syms=m[1].split(",").map(x=>x.trim()).filter(Boolean);
+  if(!syms.length||syms.some(x=>!BY_SYM[x]))return false;
+  const bonds=[];
+  (m[2]||"").split(",").filter(Boolean).forEach(t=>{
+    const p=t.split("-").map(Number);
+    if(p.length===3&&p.every(isFinite)&&p[0]>=0&&p[1]>=0&&
+       p[0]<syms.length&&p[1]<syms.length&&p[0]!==p[1])
+      bonds.push([p[0],p[1],Math.max(1,Math.min(3,p[2]|0))]);
+  });
+  const f=hillFromAtoms(syms);
+  const known=!!(SUBST[f]||STRUCT[f]||KNOWN_COMPOUNDS[f]);
+  const knownName=(SUBST[f]&&SUBST[f].name)||KNOWN_COMPOUNDS[f]||null;
+  S.struct={atoms:syms,bonds:bonds,fromBuild:true};
+  S.substance={formula:f,name:knownName||"Your build",kind:"molecular",
+    shape:"Exactly as you bonded it",fromBuild:true,known:known,
+    note:(SUBST[f]&&SUBST[f].note)?SUBST[f].note
+      :"Carried across from Orbital Forge with the bonds you actually drew — this is not a guessed sketch."};
+  S.layout=null;
+  S.specimen={label:knownName||"Your build",source:"build",c:KIND.molecular[2],
+    blurb:"You built this atom by atom in Orbital Forge. Every bond shown is one you drew.",
+    parts:[[f,100]]};
+  return true;
+}
+const _pm=panelMolecule;
+panelMolecule=function(){
+  const sb=S.substance,st=S.struct;
+  let h=_pm();
+  if(!sb||!sb.fromBuild||!st)return h;
+  const s2=buildStats(st);
+  const v = sb.known
+    ? ["Known substance","var(--ok)","This is a real compound, and it is in the library."]
+    : s2.over>0
+      ? ["Over-bonded","var(--bad)",s2.over+" atom"+(s2.over>1?"s have":" has")+
+         " more bonds than it can hold. No such molecule can exist \u2014 but the atoms themselves are still real, so you can go inside them."]
+    : s2.open>0
+      ? ["Unfinished","var(--warn)","Some atoms still have unused bonds. As drawn this is not a complete molecule."]
+      : s2.parts>1
+        ? ["Separate pieces","var(--warn)","These are "+s2.parts+" separate molecules, not one."]
+        : ["Not a known compound","var(--bad)",
+           "Every valence is satisfied, so it is a legal structure — but it is not a substance I recognise. "+
+           "Many legal structures do not exist in nature, or fall apart the instant they form. "+
+           "You can still take it apart below: the atoms inside are real either way."];
+  const extra='<div class="blk"><p class="kicker">Your structure</p>'+
+    '<div class="tagrow" style="margin:0 0 12px"><span class="tg" style="--c:'+v[1]+'">'+v[0]+'</span>'+
+    '<span class="tg" style="--c:var(--on3)">from Orbital Forge</span></div>'+
+    '<dl class="sheet">'+
+      rowOf("Atoms",String(st.atoms.length))+
+      rowOf("Bonds",String(st.bonds.length))+
+      rowOf("Single / double / triple",s2.orders[1]+" / "+s2.orders[2]+" / "+s2.orders[3])+
+      rowOf("Separate molecules",String(s2.parts),s2.parts>1?"n":"q")+
+      rowOf("Unfilled valence",String(s2.open),s2.open?"n":"q")+
+      rowOf("Over-bonded atoms",String(s2.over),s2.over?"n":"q")+
+      rowOf("Molar mass",formulaMass(sb.formula).toFixed(3)+" g/mol")+
+    '</dl><p class="quote" style="--c:'+v[1]+';margin-top:12px">'+v[2]+'</p></div>';
+  return h+extra;
+};
+function loadBuildFromHash(announceIt){
+  if(!importBuild())return false;
+  S.element=null;S.electron=null;S.nucleon=null;S.quark=null;
+  go("molecule");
+  if(announceIt)toast("Loaded your build — tap any atom to go inside it");
+  return true;
+}
+/* A hash change alone does not reload the page, so handle it explicitly:
+   opening a new build link in an already-open Lens must still work. */
+addEventListener("hashchange",()=>{loadBuildFromHash(true);});
+loadBuildFromHash(true);
+</script>
