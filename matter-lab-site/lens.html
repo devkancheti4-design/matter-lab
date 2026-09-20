@@ -2471,7 +2471,7 @@ function rxPanel(){
         (atomTally(rx.out)[k]||0)===t[k]?"q":"n")).join("")+'</dl></div>';
   } else if(picked.length){
     h+='<div class="blk"><div class="notice" style="--c:var(--warn)"><div>'+
-      '<b>Nothing happens.</b> These do not react together — at least not in a way this tool knows yet. '+
+      '<b>Nothing happens.</b> These do not react together — at least not in a way this demo knows. '+
       'Try removing one, or pick a pairing from the library below.</div></div>'+
       '<button class="btn sec" id="rxClear" style="margin-top:12px">Clear</button></div>';
   }
@@ -2748,7 +2748,20 @@ renderScanButtons=function(){
   _rsb();
   if(SHOT){
     const box=$("scanBtns"),first=box.firstChild;
-    if(first)first.lastChild.textContent=SEL?" Identify the selected part":" Identify this";
+    const ready=(CLAUDE_STATE==="ready");
+    if(first){
+      first.lastChild.textContent=ready
+        ?(SEL?" Identify the selected part":" Identify this")
+        :" Identification needs Claude";
+      if(!ready){
+        first.classList.add("sec");
+        first.onclick=()=>{
+          renderScanNote();
+          toast("Open this page inside Claude to identify photos");
+          const n=$("scanNote"); if(n) n.scrollIntoView({block:"nearest",behavior:"smooth"});
+        };
+      }
+    }
     if(SEL){
       const clr=document.createElement("button");
       clr.className="btn sec";clr.textContent="Whole image";
