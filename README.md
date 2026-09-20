@@ -5,7 +5,7 @@ substance, molecule, atom, nucleus, quark — then build things back up and reac
 
 **Live: https://matter-lab.netlify.app**
 
-> This is a demo. It works end to end, but it is early. Known gaps are listed below.
+> Early, but complete end to end. Known gaps are listed below.
 
 ## The idea
 
@@ -75,7 +75,7 @@ databases.
 
 ## Known gaps
 
-- Demo-scale content: 18 reactions, 10 specimens, 21 hand-written molecular structures.
+- Limited content so far: 18 reactions, 10 specimens, 21 hand-written molecular structures.
 - Nothing persists. Close the tab and your work is gone.
 - Valence is one number per element — no oxidation states, no resonance. H₂SO₄ cannot be built on
   the Forge bench.
