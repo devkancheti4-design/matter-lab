@@ -1,6 +1,6 @@
+# Static site: nothing to build, just publish this folder.
 [build]
   publish = "."
-  command = ""
 
 [[headers]]
   for = "/*"
