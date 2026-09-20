@@ -3,7 +3,7 @@
 Chemistry you can poke at. Start from a real object and travel down six rungs of scale —
 substance, molecule, atom, nucleus, quark — then build things back up and react them.
 
-**Live: https://matter-lab-site.vercel.app**
+**Live: https://matter-lab.netlify.app**
 
 > This is a demo. It works end to end, but it is early. Known gaps are listed below.
 

@@ -2,3 +2,6 @@
 .vercel/
 node_modules/
 reddit-post.md
+
+# Local Netlify folder
+.netlify
