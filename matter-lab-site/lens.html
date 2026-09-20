@@ -3054,6 +3054,26 @@ function hillFromAtoms(atoms){
   else keys.sort().forEach(k=>out.push([k,c[k]]));
   return out.map(x=>x[0]+(x[1]>1?x[1]:"")).join("");
 }
+/* Hill notation puts H first when there is no carbon, so ammonia hashes as
+   H3N while libraries key it NH3. Index every known formula by its Hill form
+   so the lookup works whichever way it is written. */
+function hillOf(formula){
+  const c=parseFormula(formula); if(!c)return null;
+  const atoms=[];Object.keys(c).forEach(k=>{for(let i=0;i<c[k];i++)atoms.push(k);});
+  return hillFromAtoms(atoms);
+}
+const KNOWN_BY_HILL={};
+(function(){
+  const add=(f,name)=>{const h=hillOf(f);if(h&&!KNOWN_BY_HILL[h])KNOWN_BY_HILL[h]={name:name,formula:f};};
+  Object.keys(KNOWN_COMPOUNDS).forEach(f=>add(f,KNOWN_COMPOUNDS[f]));
+  Object.keys(SUBST).forEach(f=>{if(SUBST[f].kind==="molecular")add(f,SUBST[f].name);});
+  Object.keys(STRUCT).forEach(f=>add(f,f));
+})();
+/* Period-3 and heavier atoms can hold more bonds than a single valence number
+   allows (sulfur in sulfuric acid takes six). Use this ceiling to decide what
+   is genuinely impossible, and the plain valence for what is merely unfilled. */
+const MAXVAL={H:1,He:0,B:4,C:4,N:4,O:2,F:1,Ne:0,Al:4,Si:6,P:5,S:6,Cl:7,Ar:0,
+  As:5,Se:6,Br:7,Kr:2,Sb:5,Te:6,I:7,Xe:8,Sn:4,Pb:4,Bi:5};
 function buildStats(st){
   const n=st.atoms.length,adj={},seen=new Array(n).fill(false),comps=[];
   const used=new Array(n).fill(0);
@@ -3068,8 +3088,9 @@ function buildStats(st){
   }
   let open=0,over=0;
   st.atoms.forEach((s,i)=>{
-    const v=BY_SYM[s]?BY_SYM[s].valence:0;
-    if(used[i]>v)over++; else open+=(v-used[i]);
+    const e=BY_SYM[s], v=e?e.valence:0, cap=(MAXVAL[s]!=null?MAXVAL[s]:v);
+    if(used[i]>cap)over++;
+    else if(used[i]<v)open+=(v-used[i]);
   });
   const orders={1:0,2:0,3:0};st.bonds.forEach(b=>orders[b[2]]++);
   return {parts:comps.length,open:open,over:over,orders:orders};
@@ -3087,10 +3108,11 @@ function importBuild(){
       bonds.push([p[0],p[1],Math.max(1,Math.min(3,p[2]|0))]);
   });
   const f=hillFromAtoms(syms);
-  const known=!!(SUBST[f]||STRUCT[f]||KNOWN_COMPOUNDS[f]);
-  const knownName=(SUBST[f]&&SUBST[f].name)||KNOWN_COMPOUNDS[f]||null;
+  const hit=KNOWN_BY_HILL[f]||null;
+  const known=!!hit, knownName=hit?hit.name:null;
+  const shownFormula=hit?hit.formula:f;
   S.struct={atoms:syms,bonds:bonds,fromBuild:true};
-  S.substance={formula:f,name:knownName||"Your build",kind:"molecular",
+  S.substance={formula:shownFormula,name:knownName||"Your build",kind:"molecular",
     shape:"Exactly as you bonded it",fromBuild:true,known:known,
     note:(SUBST[f]&&SUBST[f].note)?SUBST[f].note
       :"Carried across from Orbital Forge with the bonds you actually drew — this is not a guessed sketch."};
@@ -3108,7 +3130,7 @@ panelMolecule=function(){
   const s2=buildStats(st);
   const v = sb.known
     ? ["Known substance","var(--ok)","This is a real compound, and it is in the library."]
-    : s2.over>0
+    : (s2.over>0 && !sb.known)
       ? ["Over-bonded","var(--bad)",s2.over+" atom"+(s2.over>1?"s have":" has")+
          " more bonds than it can hold. No such molecule can exist \u2014 but the atoms themselves are still real, so you can go inside them."]
     : s2.open>0
