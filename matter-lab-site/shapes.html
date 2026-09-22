@@ -489,6 +489,31 @@ function panel(){
       'About twenty elements break the rule. Nobody predicted which ones \u2014 they were measured.</p></div>':"")+
     '<div class="blk"><p class="kick">Configuration</p><div class="cfg">'+
       parts.map(p=>'<span class="'+(p.now?"now":"done")+'">'+p.t+'</span>').join("")+'</div></div>'+
+    (function(){
+      const AL=1/137.035999, beta=S.e*AL;
+      const gam=beta<1?1/Math.sqrt(1-beta*beta):null;
+      const pct=Math.min(100,beta*100);
+      const col=beta<0.5?"var(--mint)":beta<0.87?"var(--gold)":"var(--neg)";
+      return '<div class="blk"><p class="kick">Speed of the innermost electron</p>'+
+        '<div style="font-family:var(--ff-m);font-size:26px;font-weight:700;color:'+col+';letter-spacing:-.02em">'+
+        (beta<1?(beta*100).toFixed(1)+"% of light":"no solution")+'</div>'+
+        '<div style="height:6px;border-radius:6px;background:var(--s2);overflow:hidden;margin:9px 0 4px">'+
+        '<i style="display:block;height:100%;width:'+pct.toFixed(1)+'%;background:'+col+';border-radius:6px"></i></div>'+
+        '<div style="font-family:var(--ff-m);font-size:10.5px;color:var(--on3)">v/c = Z\u00d7\u03b1 = '+
+        S.e+' \u00f7 137.04 = '+beta.toFixed(3)+(gam?'   \u00b7   \u03b3 = '+gam.toFixed(2):'')+'</div>'+
+        '<p class="note" style="--c:'+col+';margin-top:11px">'+
+        (S.e<70
+          ? 'Slow enough that relativity barely matters here.'
+          : S.e<100
+            ? 'Fast enough to bend the chemistry. This is why gold is yellow and mercury is a liquid rather than a solid metal.'
+            : S.e<=137
+              ? 'Very fast, but the equation still has a solution. The electrons are <b>not</b> what stops the table at 118 \u2014 they have room to about 137, and further once you account for the nucleus having a size.'
+              : 'Past Z = 137 the point-nucleus equation has no solution at all. A real nucleus has a size, which softens the pull and moves this wall out to roughly 172.')+
+        '</p>'+
+        (S.e>118?'<p class="note" style="--c:var(--pri);margin-top:9px">The table stops at 118 anyway. '+
+          'That is the nucleus giving up, not the electrons.</p>':'')+
+        '</div>';
+    })()+
     '<div class="blk"><p class="kick">Show</p><div class="seg" id="viewSeg">'+
       ['new','subshell','shell'].map(v=>'<button data-v="'+v+'" aria-pressed="'+(S.view===v)+'">'+
         (v==="new"?"Newest":v==="subshell"?"Subshell":"Shell")+'</button>').join("")+
