@@ -185,6 +185,22 @@ const EL=("H Hydrogen,He Helium,Li Lithium,Be Beryllium,B Boron,C Carbon,N Nitro
 "Rf Rutherfordium,Db Dubnium,Sg Seaborgium,Bh Bohrium,Hs Hassium,Mt Meitnerium,Ds Darmstadtium,"+
 "Rg Roentgenium,Cn Copernicium,Nh Nihonium,Fl Flerovium,Mc Moscovium,Lv Livermorium,"+
 "Ts Tennessine,Og Oganesson").split(",").map(s=>{const i=s.indexOf(" ");return{sym:s.slice(0,i),name:s.slice(i+1)};});
+/* IUPAC systematic placeholder naming, for elements nobody has made */
+const ROOT=["nil","un","bi","tri","quad","pent","hex","sept","oct","enn"];
+function systematic(z){
+  const d=String(z).split("").map(Number);
+  /* IUPAC elisions, and only these two: the final n of "enn" drops before
+     "nil", and the final i of "bi"/"tri" drops before "ium". "ennium" keeps
+     its double n -- 119 is ununennium. */
+  let nm=d.map(x=>ROOT[x]).join("");
+  nm=nm.replace(/ennnil/g,"ennil")+"ium";
+  nm=nm.replace(/iium/g,"ium");
+  const sym=d.map(x=>ROOT[x][0]).join("");
+  return {sym:sym.charAt(0).toUpperCase()+sym.slice(1),
+          name:nm.charAt(0).toUpperCase()+nm.slice(1),predicted:true};
+}
+const ZMAX=168;
+for(let z=119;z<=ZMAX;z++) EL.push(systematic(z));
 
 /* ---------- real spherical harmonics, l = 0..3 ---------- */
 function Y(l,m,th,ph){
@@ -207,8 +223,21 @@ function Y(l,m,th,ph){
   if(m===-1) return 0.125*Math.sqrt(42/Math.PI)*s*(5*c*c-1)*Math.sin(ph);
   if(m===2)  return 0.25*Math.sqrt(105/Math.PI)*s*s*c*Math.cos(2*ph);
   if(m===-2) return 0.25*Math.sqrt(105/Math.PI)*s*s*c*Math.sin(2*ph);
-  if(m===3)  return 0.125*Math.sqrt(70/Math.PI)*s*s*s*Math.cos(3*ph);
-  return            0.125*Math.sqrt(70/Math.PI)*s*s*s*Math.sin(3*ph);
+  if(l===3){
+    if(m===3)  return 0.125*Math.sqrt(70/Math.PI)*s*s*s*Math.cos(3*ph);
+    return            0.125*Math.sqrt(70/Math.PI)*s*s*s*Math.sin(3*ph);
+  }
+  /* l = 4, the g orbitals. only reachable past element 120. */
+  const X=s*Math.cos(ph), Yy=s*Math.sin(ph), Zz=c, PI=Math.PI;
+  if(m===0)  return (3/16)*Math.sqrt(1/PI)*(35*Math.pow(Zz,4)-30*Zz*Zz+3);
+  if(m===1)  return (3/4)*Math.sqrt(5/(2*PI))*X*Zz*(7*Zz*Zz-3);
+  if(m===-1) return (3/4)*Math.sqrt(5/(2*PI))*Yy*Zz*(7*Zz*Zz-3);
+  if(m===2)  return (3/8)*Math.sqrt(5/PI)*(X*X-Yy*Yy)*(7*Zz*Zz-1);
+  if(m===-2) return (3/4)*Math.sqrt(5/PI)*X*Yy*(7*Zz*Zz-1);
+  if(m===3)  return (3/4)*Math.sqrt(35/(2*PI))*(X*X-3*Yy*Yy)*X*Zz;
+  if(m===-3) return (3/4)*Math.sqrt(35/(2*PI))*(3*X*X-Yy*Yy)*Yy*Zz;
+  if(m===4)  return (3/16)*Math.sqrt(35/PI)*(Math.pow(X,4)-6*X*X*Yy*Yy+Math.pow(Yy,4));
+  return            (3/4)*Math.sqrt(35/PI)*X*Yy*(X*X-Yy*Yy);
 }
 const LSET={
   s:[[0,0,"s"]],
@@ -217,11 +246,14 @@ const LSET={
      [2,1,"dₓᶻ"],[2,-1,"dᵧᶻ"]],
   f:[[3,0,"fᶻ³"],[3,1,"fₓᶻ²"],[3,-1,"fᵧᶻ²"],
      [3,2,"fᶻ(ₓ²₋ᵧ²)"],[3,-2,"fₓᵧᶻ"],
-     [3,3,"fₓ³"],[3,-3,"fᵧ³"]]
+     [3,3,"fₓ³"],[3,-3,"fᵧ³"]],
+  g:[[4,0,"g₁"],[4,1,"g₂"],[4,-1,"g₃"],[4,2,"g₄"],[4,-2,"g₅"],
+     [4,3,"g₆"],[4,-3,"g₇"],[4,4,"g₈"],[4,-4,"g₉"]]
 };
-const CAP={s:2,p:6,d:10,f:14};
+const CAP={s:2,p:6,d:10,f:14,g:18};
 const ORDER=[[1,"s"],[2,"s"],[2,"p"],[3,"s"],[3,"p"],[4,"s"],[3,"d"],[4,"p"],[5,"s"],[4,"d"],
-[5,"p"],[6,"s"],[4,"f"],[5,"d"],[6,"p"],[7,"s"],[5,"f"],[6,"d"],[7,"p"]];
+[5,"p"],[6,"s"],[4,"f"],[5,"d"],[6,"p"],[7,"s"],[5,"f"],[6,"d"],[7,"p"],
+[8,"s"],[5,"g"],[6,"f"],[7,"d"],[8,"p"]];  /* past 118: what the rule predicts */
 const SUP={0:"⁰",1:"¹",2:"²",3:"³",4:"⁴",5:"⁵",6:"⁶",7:"⁷",8:"⁸",9:"⁹"};
 const sup=n=>String(n).split("").map(d=>SUP[d]).join("");
 
@@ -398,14 +430,15 @@ const SHAPE_NOTE={
  0:["A sphere. No direction at all.","An s orbital points nowhere, so it makes no demands about bond angles. Hydrogen and helium have only this."],
  1:["Two lobes, one axis.","p orbitals come in three, at right angles to each other. That is where 90° bond angles come from — and once you mix them with s, the 109.5° of methane and the 104.5° bend of water."],
  2:["Four lobes, two nodal planes.","d orbitals point between the axes as often as along them. That is why transition metals bond in sixes and eights instead of fours, and why their compounds are coloured."],
- 3:["Six or eight lobes, three nodal surfaces.","f orbitals are buried under the outer shells, so they barely touch chemistry. That is why the lanthanides are nearly indistinguishable from one another."]
+ 3:["Six or eight lobes, three nodal surfaces.","f orbitals are buried under the outer shells, so they barely touch chemistry. That is why the lanthanides are nearly indistinguishable from one another."],
+ 4:["Nine shapes, four nodal surfaces.","g orbitals have never been occupied by any atom that exists. The rule says they start filling at element 121, eighteen electrons across. Every shape you see here is a prediction that has never been tested against a real atom."]
 };
 function panel(){
   const es=electrons(S.e), last=es[es.length-1];
   const el=EL[S.e-1];
   const occ={};es.forEach(x=>{const k=x.sub+":"+x.orb;occ[k]=(occ[k]||0)+1;});
   const subOrbs=LSET[last.l];
-  const nd=SHAPE_NOTE[last.lq];
+  const nd=SHAPE_NOTE[last.lq]||["Shape","No description for this orbital family yet."];
   const parts=config(S.e,true);
   $("panel").innerHTML=
     '<div class="blk"><p class="kick">Electron</p>'+
@@ -416,7 +449,7 @@ function panel(){
           '<div class="su">'+el.sym+' &middot; Z = '+S.e+'</div></div>'+
         '<button class="step" id="plus" aria-label="one more">+</button>'+
       '</div>'+
-      '<input type="range" id="slider" min="1" max="118" value="'+S.e+'" aria-label="electron count">'+
+      '<input type="range" id="slider" min="1" max="168" value="'+S.e+'" aria-label="electron count">'+
     '</div>'+
     '<div class="blk"><p class="kick">The electron you just added</p>'+
       '<dl class="sheet">'+
@@ -433,6 +466,23 @@ function panel(){
         ' <b>'+(occ[last.sub+":"+i]||0)+'</b></span>').join("")+
       '</div><p style="font-size:12px;color:var(--on3);margin:10px 0 0">'+
       'Each gets one electron before any gets two.</p></div>'+
+    (S.e>118?'<div class="blk"><p class="kick" style="color:var(--gold)">This one does not exist</p>'+
+      '<p class="note" style="--c:var(--gold)">Nothing past element 118 has ever been made. '+
+      (S.e<=120
+        ? 'Element '+S.e+' has been attempted \u2014 in Japan and in Russia \u2014 and has not been produced.'
+        : 'Element '+S.e+' is far beyond anything anyone has attempted.')+
+      ' The name is the IUPAC placeholder built from its digits, and the shape above is '+
+      'simply what the filling rule says comes next.</p>'+
+      (S.e>=121
+        ? '<p class="note" style="--c:var(--neg);margin-top:10px"><b>And the rule is probably wrong here.</b> '+
+          'At this many protons the inner electrons move fast enough for relativity to matter, '+
+          'which reshuffles the order the shells fill in. Detailed calculations disagree with the '+
+          'simple rule from about here onward, and disagree with each other too.</p>'
+        : '')+
+      '<p class="note" style="--c:var(--pri);margin-top:10px">Whether this atom could exist at all is '+
+      'a nuclear question, not an electron one. The shell rule will happily draw you element 500. '+
+      'It has nothing to say about whether the nucleus holds together for even a microsecond.</p>'+
+      '</div>':"")+
     (EXC[S.e]?'<div class="blk"><p class="kick" style="color:var(--neg)">The rule is wrong here</p>'+
       '<p class="note" style="--c:var(--neg)">The filling order predicts this electron goes where the '+
       'walk just put it. Measured, '+el.name+' actually ends <b>'+EXC[S.e]+'</b>. '+
@@ -449,18 +499,18 @@ function panel(){
 }
 const row=(k,v)=>"<dt>"+k+"</dt><dd>"+v+"</dd>";
 function wire(){
-  $("minus").disabled=S.e<=1; $("plus").disabled=S.e>=118;
+  $("minus").disabled=S.e<=1; $("plus").disabled=S.e>=ZMAX;
   $("minus").onclick=()=>set(S.e-1); $("plus").onclick=()=>set(S.e+1);
   $("slider").oninput=e=>set(+e.target.value);
   $("viewSeg").querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{S.view=b.dataset.v;panel();});
   $("spin").onclick=()=>{S.auto=S.auto?0:1;panel();};
   $("reset").onclick=()=>{S.yaw=0.6;S.pitch=-0.35;S.zoom=1;panel();};
 }
-function set(v){S.e=Math.max(1,Math.min(118,v));panel();hud();}
+function set(v){S.e=Math.max(1,Math.min(ZMAX,v));panel();hud();}
 function hud(){
   const es=electrons(S.e),last=es[es.length-1];
   $("orbBig").innerHTML=last.sub+"<sup>"+(es.filter(x=>x.sub===last.sub).length)+"</sup>";
-  $("orbSub").innerHTML="<b>"+EL[S.e-1].name+"</b> &middot; electron "+S.e+" enters "+last.label;
+  $("orbSub").innerHTML="<b>"+EL[S.e-1].name+"</b>"+(EL[S.e-1].predicted?' <span style="color:var(--gold)">predicted only</span>':"")+" &middot; electron "+S.e+" enters "+last.label;
   $("hudTR").innerHTML="n = <b>"+last.n+"</b><br>ℓ = <b>"+last.lq+"</b> ("+"spdf"[last.lq]+")<br>"+
     "nodes = <b>"+last.lq+"</b>";
 }
@@ -495,7 +545,7 @@ let acc=0,prev=null;
 function frame(ts){
   if(prev==null)prev=ts;
   const dt=Math.min(100,ts-prev);prev=ts;
-  if(S.playing){acc+=dt; if(acc>420){acc=0; set(S.e>=118?1:S.e+1);}}
+  if(S.playing){acc+=dt; if(acc>420){acc=0; set(S.e>=ZMAX?1:S.e+1);}}
   try{draw(ts/1000);}catch(err){}
   requestAnimationFrame(frame);
 }
